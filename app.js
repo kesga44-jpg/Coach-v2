@@ -83,7 +83,25 @@ function normalize(){
 function load(){try{const raw=localStorage.getItem(STORAGE_KEY)||localStorage.getItem(LEGACY_STORAGE_KEY);state=raw?JSON.parse(raw):clone(window.STARTER_DATA);normalize();if(!localStorage.getItem(STORAGE_KEY))save({render:false,sync:false})}catch{state=clone(window.STARTER_DATA);normalize()}}
 function save({render=true,sync=true}={}){state.meta.updatedAt=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));const lbl=$('#saveStateLabel');if(lbl)lbl.textContent='Opgeslagen '+new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});if(render)renderPage();if(sync&&syncConfigured()){clearTimeout(syncTimer);syncTimer=setTimeout(()=>pushSync(true),1200)}}
 function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400)}
-function setPage(page){ui.page=page;$$('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));renderPage();window.scrollTo({top:0,behavior:'smooth'})}
+function setPage(page){
+  ui.page=page;
+
+  const activeNavPage=page==='player'?'players':page;
+
+  $$('[data-page]').forEach(b=>{
+    b.classList.toggle(
+      'active',
+      b.dataset.page===activeNavPage
+    );
+  });
+
+  renderPage();
+
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
+  });
+}
 function pageInfo(){const map={dashboard:['Vandaag','OVERZICHT'],players:['Teams & spelers','SELECTIE & ONTWIKKELING'],attendance:['Aanwezigheid','BESCHIKBAARHEID'],trainings:['Trainingen','PLANNING & COACHPUNTEN'],exercises:['Oefeningen','BIBLIOTHEEK'],matches:['Wedstrijden','OPSTELLING & EVALUATIE'],tactics:['Tactiekbord','SPELIDEE'],season:['Seizoen','KALENDER & PERIODISERING'],stats:['Statistieken','TEAM & SPELERS'],notes:['Coachnotities','OBSERVATIES'],documents:['Bronnen','DOCUMENTEN → OEFENINGEN'],assistant:['Coachassistent','SLIMME COACHHULP'],settings:['Instellingen','APP & SYNC'],more:['Meer','FOOTBALL COACH']};return map[ui.page]||map.dashboard}
 function renderTeamSelect(){const s=$('#globalTeamSelect');if(!s)return;s.innerHTML=teamOptions(ui.teamId);s.value=ui.teamId;s.onchange=()=>{ui.teamId=s.value;ui.attendanceId=null;ui.trainingId=null;ui.matchId=null;renderPage()};$('#brandTeam').textContent=activeTeam()?.name||state.team.name||'Football Coach'}
 function renderPage(){normalize();const [title,eye]=pageInfo();$('#pageTitle').textContent=title;$('#pageEyebrow').textContent=(state.team.season?`SEIZOEN ${state.team.season} · `:'')+eye;renderTeamSelect();const fn={dashboard:renderDashboard,players:renderPlayers,attendance:renderAttendance,trainings:renderTrainings,exercises:renderExercises,matches:renderMatches,tactics:renderTactics,season:renderSeason,stats:renderStats,notes:renderNotes,documents:renderDocuments,assistant:renderAssistant,settings:renderSettings,more:renderMore}[ui.page]||renderDashboard;$('#app').innerHTML=fn();bindPage()}
