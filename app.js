@@ -187,7 +187,387 @@ function teamForm(t={}){return `<div class="form-grid"><div class="field full"><
 function editTeam(id){const t=id?state.teams.find(x=>x.id===id):null;modal(t?'Team bewerken':'Team toevoegen',teamForm(t||{}),()=>{const name=$('#fTeamName').value.trim();if(!name){toast('Vul een teamnaam in');return false}const obj=t||{id:uid('team')};Object.assign(obj,{name,shortName:$('#fTeamShort').value.trim(),category:$('#fTeamCat').value.trim(),formation:$('#fTeamFormation').value,active:$('#fTeamActive').value==='1',notes:$('#fTeamNotes').value.trim()});if(!t){state.teams.push(obj);ui.teamId=obj.id}return true})}
 function playerForm(p={}){const ids=p.teamIds||[ui.teamId];const s=p.scores||{};return `<div class="form-grid"><div class="field full"><label>Naam</label><input id="fName" class="input" value="${esc(p.name||'')}"></div><div class="field"><label>Rugnummer</label><input id="fNumber" class="input" inputmode="numeric" value="${esc(p.number||'')}"></div><div class="field"><label>Positie</label><input id="fPosition" class="input" placeholder="CV / RB / 6 / 8 / 10..." value="${esc(p.position||'')}"></div><div class="field"><label>Alternatieve posities</label><input id="fAltPositions" class="input" placeholder="RB, CVM" value="${esc((p.alternatePositions||[]).join(', '))}"></div><div class="field"><label>Voorkeursbeen</label><select id="fFoot"><option value=""></option><option ${p.preferredFoot==='Rechts'?'selected':''}>Rechts</option><option ${p.preferredFoot==='Links'?'selected':''}>Links</option><option ${p.preferredFoot==='Tweebenig'?'selected':''}>Tweebenig</option></select></div><div class="field"><label>Geboortedatum</label><input id="fBirth" class="input" type="date" value="${esc(p.birthDate||'')}"></div><div class="field"><label>Selectiestatus</label><select id="fSelection">${['Definitief','Twijfel','O19/O23','Eerste elftal','Geblesseerd','Tijdelijk niet beschikbaar','Overig'].map(x=>`<option ${p.selection===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Primair team</label><select id="fPrimaryTeam">${teamOptions(p.primaryTeamId||ui.teamId)}</select></div><div class="field full"><label>Teams waarin speler beschikbaar is</label><div class="check-grid">${state.teams.map(t=>`<label class="check-item"><input type="checkbox" name="playerTeam" value="${t.id}" ${ids.includes(t.id)?'checked':''}> ${esc(t.name)}</label>`).join('')}</div></div><div class="field full"><label>Ontwikkeldoelen</label><textarea id="fGoals">${esc(p.developmentGoals||'')}</textarea></div><div class="field full"><label>Coachnotities speler</label><textarea id="fNotes">${esc(p.notes||'')}</textarea></div><div class="field full"><label>Ontwikkelscores (0 = niet beoordeeld, 1–5)</label><div class="score-grid">${Object.entries(SCORE_LABELS).map(([k,l])=>`<div class="field"><label>${l}</label><input id="score-${k}" class="input" type="number" min="0" max="5" value="${number(s[k])}"></div>`).join('')}</div></div></div>`}
 function editPlayer(id){const p=id?playerById(id):null;modal(p?'Spelerprofiel bewerken':'Speler toevoegen',playerForm(p||{}),()=>{const name=$('#fName').value.trim();if(!name){toast('Vul een naam in');return false}const teamIds=$$('input[name=playerTeam]:checked').map(x=>x.value);const primary=$('#fPrimaryTeam').value;if(!teamIds.includes(primary))teamIds.unshift(primary);const obj=p||{id:uid('p'),conversations:[]};Object.assign(obj,{name,number:$('#fNumber').value.trim(),position:$('#fPosition').value.trim(),alternatePositions:$('#fAltPositions').value.split(',').map(x=>x.trim()).filter(Boolean),preferredFoot:$('#fFoot').value,birthDate:$('#fBirth').value,selection:$('#fSelection').value,primaryTeamId:primary,teamIds,developmentGoals:$('#fGoals').value.trim(),notes:$('#fNotes').value.trim(),active:true,scores:Object.fromEntries(Object.keys(SCORE_LABELS).map(k=>[k,Math.max(0,Math.min(5,number($(`#score-${k}`).value)))]))});if(!p)state.players.push(obj);return true})}
-function showPlayerProfile(id){const p=playerById(id);if(!p)return;const pct=attendancePct(id,p.primaryTeamId),mt=matchTotals(id,p.primaryTeamId),notes=state.coachNotes.filter(n=>n.playerId===id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,6);const scoreBoxes=Object.entries(SCORE_LABELS).map(([k,l])=>`<div class="score-box"><span class="tiny muted">${l}</span><strong>${number(p.scores?.[k])||'–'}</strong></div>`).join('');modal(`Profiel · ${p.name}`,`<div class="profile-grid"><div class="profile-avatar">${initials(p.name)}</div><div><div class="chips"><span class="badge green">${esc(teamName(p.primaryTeamId))}</span><span class="badge">${esc(p.position||'Geen positie')}</span><span class="badge ${p.selection==='Definitief'?'green':p.selection==='Twijfel'?'orange':''}">${esc(p.selection)}</span></div><h2 style="margin-top:10px">${esc(p.name)}</h2><p class="muted small">#${esc(p.number||'–')} · ${esc(p.preferredFoot||'voet onbekend')} · teams: ${(p.teamIds||[]).map(teamName).map(esc).join(', ')}</p></div></div><div class="grid three" style="margin-top:16px"><div class="summary-box"><span class="small muted">Trainingsopkomst</span><strong>${pct===null?'–':pct+'%'}</strong></div><div class="summary-box"><span class="small muted">Wedstrijdminuten</span><strong>${mt.minutes}</strong></div><div class="summary-box"><span class="small muted">Goals / assists</span><strong>${mt.goals} / ${mt.assists}</strong></div></div><h3 class="section-title">Ontwikkeling</h3><div class="score-grid">${scoreBoxes}</div><h3 class="section-title">Doelen</h3><div class="callout">${p.developmentGoals?nl2br(p.developmentGoals):'Nog geen ontwikkeldoelen.'}</div><h3 class="section-title">Coachnotities</h3>${p.notes?`<p>${nl2br(p.notes)}</p>`:''}${notes.length?notes.map(n=>`<div class="note-card"><div class="note-meta"><span class="badge">${fmtDate(n.date)}</span><span class="chip">${esc(n.category||'Notitie')}</span></div><div class="small">${nl2br(n.text)}</div></div>`).join(''):'<div class="empty">Nog geen gekoppelde observaties.</div>'}`,()=>true,{saveText:'Bewerken',onSave:()=>{closeModal();editPlayer(id)}})}
+function showPlayerProfile(id){
+  const p=playerById(id);
+
+  if(!p)return;
+
+  ui.playerId=id;
+  setPage('player');
+}
+function renderPlayerProfilePage(){
+
+  const p=playerById(ui.playerId);
+
+  if(!p){
+    return `
+      <section class="card">
+        <div class="empty">
+          Speler niet gevonden.
+        </div>
+
+        <button
+          class="btn ghost"
+          data-go="players"
+          style="margin-top:12px"
+        >
+          ← Terug naar spelers
+        </button>
+      </section>
+    `;
+  }
+
+  const teamId=p.primaryTeamId||ui.teamId;
+
+  const pct=attendancePct(
+    p.id,
+    teamId
+  );
+
+  const mt=matchTotals(
+    p.id,
+    teamId
+  );
+
+  const teams=(p.teamIds||[])
+    .map(teamName)
+    .filter(Boolean);
+
+  const notes=state.coachNotes
+    .filter(n=>n.playerId===p.id)
+    .sort((a,b)=>
+      (b.date||'').localeCompare(a.date||'')
+    )
+    .slice(0,8);
+
+  const scoreBoxes=Object.entries(SCORE_LABELS)
+    .map(([key,label])=>`
+      <div class="player-development-score">
+        <span>${label}</span>
+        <strong>
+          ${number(p.scores?.[key])||'–'}
+        </strong>
+        <small>/ 5</small>
+      </div>
+    `)
+    .join('');
+
+  return `
+
+    <div class="player-profile-actions">
+
+      <button
+        class="btn ghost"
+        data-go="players"
+      >
+        ← Team
+      </button>
+
+      <button
+        class="btn primary"
+        data-edit-player="${p.id}"
+      >
+        ✎ Bewerken
+      </button>
+
+    </div>
+
+
+    <div class="player-profile-layout">
+
+
+      <aside class="card player-profile-summary">
+
+        <div class="player-profile-avatar">
+          ${initials(p.name)}
+        </div>
+
+        <div class="player-profile-name">
+
+          <p class="eyebrow">
+            SPELER
+          </p>
+
+          <h2>
+            ${esc(p.name)}
+          </h2>
+
+          <p class="muted">
+            ${esc(p.position||'Positie niet ingevuld')}
+          </p>
+
+        </div>
+
+
+        <div class="chips player-profile-tags">
+
+          <span class="badge green">
+            ${esc(teamName(p.primaryTeamId))}
+          </span>
+
+          ${
+            p.number
+              ? `<span class="badge">#${esc(p.number)}</span>`
+              : ''
+          }
+
+          <span class="badge ${
+            p.selection==='Definitief'
+              ? 'green'
+              : p.selection==='Twijfel'
+                ? 'orange'
+                : ''
+          }">
+            ${esc(p.selection||'Overig')}
+          </span>
+
+        </div>
+
+
+        <div class="player-info-list">
+
+          <div>
+            <span>Positie</span>
+            <strong>
+              ${esc(p.position||'–')}
+            </strong>
+          </div>
+
+          <div>
+            <span>Alternatief</span>
+            <strong>
+              ${
+                p.alternatePositions?.length
+                  ? esc(p.alternatePositions.join(', '))
+                  : '–'
+              }
+            </strong>
+          </div>
+
+          <div>
+            <span>Voorkeursbeen</span>
+            <strong>
+              ${esc(p.preferredFoot||'–')}
+            </strong>
+          </div>
+
+          <div>
+            <span>Geboortedatum</span>
+            <strong>
+              ${p.birthDate
+                ? fmtLong(p.birthDate)
+                : '–'}
+            </strong>
+          </div>
+
+          <div>
+            <span>Teams</span>
+            <strong>
+              ${teams.length
+                ? teams.map(esc).join(', ')
+                : '–'}
+            </strong>
+          </div>
+
+        </div>
+
+      </aside>
+
+
+      <main class="player-profile-main">
+
+
+        <div class="player-profile-stats">
+
+          <div class="card player-stat-card">
+            <span>Opkomst</span>
+            <strong>
+              ${pct===null?'–':pct+'%'}
+            </strong>
+            <small>
+              Trainingen
+            </small>
+          </div>
+
+
+          <div class="card player-stat-card">
+            <span>Wedstrijden</span>
+            <strong>
+              ${mt.games}
+            </strong>
+            <small>
+              ${mt.starts} basis
+            </small>
+          </div>
+
+
+          <div class="card player-stat-card">
+            <span>Minuten</span>
+            <strong>
+              ${mt.minutes}
+            </strong>
+            <small>
+              Wedstrijdminuten
+            </small>
+          </div>
+
+
+          <div class="card player-stat-card">
+            <span>Goals / assists</span>
+            <strong>
+              ${mt.goals} / ${mt.assists}
+            </strong>
+            <small>
+              Dit seizoen
+            </small>
+          </div>
+
+        </div>
+
+
+        <section class="card">
+
+          <div class="card-head">
+
+            <div>
+              <p class="eyebrow">
+                ONTWIKKELING
+              </p>
+
+              <h2>
+                Spelersontwikkeling
+              </h2>
+            </div>
+
+          </div>
+
+          <div class="player-development-grid">
+            ${scoreBoxes}
+          </div>
+
+        </section>
+
+
+        <section class="card">
+
+          <div class="card-head">
+
+            <div>
+              <p class="eyebrow">
+                DOELSTELLINGEN
+              </p>
+
+              <h2>
+                Ontwikkeldoelen
+              </h2>
+            </div>
+
+          </div>
+
+          ${
+            p.developmentGoals
+              ? `<div class="callout">
+                   ${nl2br(p.developmentGoals)}
+                 </div>`
+              : `<div class="empty">
+                   Nog geen ontwikkeldoelen ingevuld.
+                 </div>`
+          }
+
+        </section>
+
+
+        <section class="card">
+
+          <div class="card-head">
+
+            <div>
+              <p class="eyebrow">
+                COACH
+              </p>
+
+              <h2>
+                Spelersnotities
+              </h2>
+            </div>
+
+          </div>
+
+          ${
+            p.notes
+              ? `<div class="callout">
+                   ${nl2br(p.notes)}
+                 </div>`
+              : `<p class="muted small">
+                   Geen vaste spelersnotities.
+                 </p>`
+          }
+
+        </section>
+
+
+        <section class="card">
+
+          <div class="card-head">
+
+            <div>
+              <p class="eyebrow">
+                OBSERVATIES
+              </p>
+
+              <h2>
+                Recente coachnotities
+              </h2>
+            </div>
+
+            <button
+              class="btn ghost small-btn"
+              data-go="notes"
+            >
+              Alle notities
+            </button>
+
+          </div>
+
+          ${
+            notes.length
+              ? notes.map(n=>`
+
+                  <div class="note-card">
+
+                    <div class="note-meta">
+
+                      <span class="badge">
+                        ${fmtDate(n.date)}
+                      </span>
+
+                      <span class="chip">
+                        ${esc(n.category||'Notitie')}
+                      </span>
+
+                    </div>
+
+                    <div class="small">
+                      ${nl2br(n.text)}
+                    </div>
+
+                  </div>
+
+                `).join('')
+
+              : `<div class="empty">
+                   Nog geen coachnotities voor deze speler.
+                 </div>`
+          }
+
+        </section>
+
+
+      </main>
+
+    </div>
+  `;
+}
 
 function renderAttendance(){
   const team=activeTeam();const events=[...state.trainings.filter(x=>x.teamId===team.id).map(x=>({...x,_type:'Training'})),...state.matches.filter(x=>x.teamId===team.id).map(x=>({...x,_type:'Wedstrijd'}))].sort((a,b)=>b.date.localeCompare(a.date));
