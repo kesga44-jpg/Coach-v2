@@ -1,0 +1,21 @@
+# Football Coach V2
+
+- Meerdere teams + primair team per speler
+- Eigen groep/selectie per training en wedstrijd
+- Uitgebreide bewerkbare spelersprofielen
+- Ontwikkelscores en doelen
+- Aanwezigheid per team/groep
+- Trainingsplanner met coachpunten per planitem
+- Slimme lokale trainingsgenerator
+- Uitgebreide oefeningenbibliotheek
+- PDF/DOCX/Excel/TXT documentextractie naar oefenkandidaten
+- Visuele wedstrijdopstelling en formaties
+- Wedstrijdchecklist, plan, score, minuten, goals/assists/kaarten
+- Wedstrijdevaluatie naar volgende training
+- Tactiekbord met spelers, pionnen, bal, pijlen en zones
+- Seizoenskalender en periodisering
+- Statistieken
+- Coachnotities gekoppeld aan speler/activiteit
+- Lokale coachassistent + optionele beveiligde endpoint
+- JSON-back-up + versleutelde Supabase-sync
+- Automatische migratie van V1 lokale data
