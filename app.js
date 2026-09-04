@@ -133,7 +133,23 @@ function pageInfo(){
   return map[ui.page]||map.dashboard;
 }
 function renderTeamSelect(){const s=$('#globalTeamSelect');if(!s)return;s.innerHTML=teamOptions(ui.teamId);s.value=ui.teamId;s.onchange=()=>{ui.teamId=s.value;ui.attendanceId=null;ui.trainingId=null;ui.matchId=null;renderPage()};$('#brandTeam').textContent=activeTeam()?.name||state.team.name||'Football Coach'}
-function renderPage(){normalize();const [title,eye]=pageInfo();$('#pageTitle').textContent=title;$('#pageEyebrow').textContent=(state.team.season?`SEIZOEN ${state.team.season} · `:'')+eye;renderTeamSelect();const fn={dashboard:renderDashboard,players:renderPlayers,attendance:renderAttendance,trainings:renderTrainings,exercises:renderExercises,matches:renderMatches,tactics:renderTactics,season:renderSeason,stats:renderStats,notes:renderNotes,documents:renderDocuments,assistant:renderAssistant,settings:renderSettings,more:renderMore}[ui.page]||renderDashboard;$('#app').innerHTML=fn();bindPage()}
+function renderPage(){normalize();const [title,eye]=pageInfo();$('#pageTitle').textContent=title;$('#pageEyebrow').textContent=(state.team.season?`SEIZOEN ${state.team.season} · `:'')+eye;renderTeamSelect();const fn={
+  dashboard:renderDashboard,
+  players:renderPlayers,
+  player:renderPlayerProfilePage,
+  attendance:renderAttendance,
+  trainings:renderTrainings,
+  exercises:renderExercises,
+  matches:renderMatches,
+  tactics:renderTactics,
+  season:renderSeason,
+  stats:renderStats,
+  notes:renderNotes,
+  documents:renderDocuments,
+  assistant:renderAssistant,
+  settings:renderSettings,
+  more:renderMore
+}[ui.page]||renderDashboard;$('#app').innerHTML=fn();bindPage()}
 function scheduleRow(e){const d=new Date(e.date+'T12:00:00');return `<div class="schedule-row"><div class="date-box"><strong>${d.getDate()}</strong><span>${d.toLocaleDateString('nl-NL',{month:'short'})}</span></div><div><strong>${esc(e.type==='Wedstrijd'?(e.opponent?`vs ${e.opponent}`:'Wedstrijd'):(e.title||'Training'))}</strong><div class="event-meta"><span class="muted small">${fmtDate(e.date)} ${esc(e.startTime||'')}</span>${e.focus?`<span class="chip">${esc(e.focus)}</span>`:''}</div></div><span class="badge ${e.type==='Training'?'green':'blue'}">${esc(e.type)}</span></div>`}
 
 function renderDashboard(){
