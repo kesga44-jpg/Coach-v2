@@ -23,7 +23,7 @@ const FORMATIONS={
   ]
 };
 const CHECKLIST_LABELS={selection:'Selectie compleet',lineup:'Opstelling gemaakt',opponent:'Tegenstander besproken',setPieces:'Standaardsituaties',warmup:'Warming-up klaar',materials:'Materiaal gecontroleerd'};
-const ui={page:'dashboard',teamId:null,attendanceId:null,trainingId:null,matchId:null,tacticId:null,playerSearch:'',exerciseSearch:'',exerciseCategory:'',noteFilter:'',docCandidates:[],docFilename:'',docText:'',generatorPlan:null,tacticTool:'playerA',arrowStart:null};
+const ui={page:'dashboard',teamId:null,playerId:null,attendanceId:null,trainingId:null,matchId:null,tacticId:null,playerSearch:'',exerciseSearch:'',exerciseCategory:'',noteFilter:'',docCandidates:[],docFilename:'',docText:'',generatorPlan:null,tacticTool:'playerA',arrowStart:null};
 let state=null,syncTimer=null,draggedPlayerId=null;
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const clone=o=>JSON.parse(JSON.stringify(o));
