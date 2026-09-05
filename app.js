@@ -722,7 +722,26 @@ function bindPage(){
 
 function handleClick(e){const b=e.target.closest('button');if(!b)return;
   if(b.dataset.page){setPage(b.dataset.page);return}if(b.dataset.go){setPage(b.dataset.go);return}if(b.dataset.teamTab){ui.teamId=b.dataset.teamTab;renderPage();return}
-  if(b.hasAttribute('data-add-team'))return editTeam();if(b.dataset.editTeam)return editTeam(b.dataset.editTeam);if(b.hasAttribute('data-add-player'))return editPlayer();if(b.dataset.editPlayer)return editPlayer(b.dataset.editPlayer);if(b.dataset.profilePlayer)return showPlayerProfile(b.dataset.profilePlayer);
+  if(b.hasAttribute('data-add-team'))return editTeam();if(b.dataset.editTeam)return editTeam(b.dataset.editTeam);if(b.dataset.archivePlayer){
+
+  const p=playerById(b.dataset.archivePlayer);
+
+  if(!p)return;
+
+  if(confirm(
+    `${p.name} uit de actieve selectie verwijderen?\n\n` +
+    `De aanwezigheid, wedstrijden en statistieken blijven bewaard.`
+  )){
+
+    p.active=false;
+
+    save();
+
+    toast(`${p.name} is uit de selectie verwijderd`);
+  }
+
+  return;
+}
   if(b.dataset.attendance){ui.attendanceId=b.dataset.attendance;return setPage('attendance')}if(b.dataset.editEventSquad)return editEventSquad(b.dataset.editEventSquad);if(b.hasAttribute('data-all-present')){const ev=eventById(ui.attendanceId);eventPlayerIds(ev).forEach(id=>ev.attendance[id]='Aanwezig');return save()}if(b.hasAttribute('data-clear-attendance')){if(confirm('Alle aanwezigheid voor deze activiteit leegmaken?')){eventById(ui.attendanceId).attendance={};save()}return}
   if(b.hasAttribute('data-add-training'))return editTraining();if(b.dataset.editTraining)return editTraining(b.dataset.editTraining);if(b.dataset.trainingOpen){ui.trainingId=b.dataset.trainingOpen;return setPage('trainings')}if(b.dataset.selectTraining){ui.trainingId=b.dataset.selectTraining;return renderPage()}if(b.hasAttribute('data-add-plan-item'))return addPlanItem();if(b.dataset.editPlanItem)return editPlanItem(b.dataset.editPlanItem);if(b.dataset.planUp)return movePlanItem(b.dataset.planUp,-1);if(b.dataset.planDown)return movePlanItem(b.dataset.planDown,1);if(b.dataset.removePlanItem)return removePlanItem(b.dataset.removePlanItem);if(b.hasAttribute('data-generate')){ui.generatorPlan=null;return renderPage()}if(b.hasAttribute('data-run-generator'))return generateTrainingPlan();if(b.hasAttribute('data-save-generator'))return saveGenerator();if(b.hasAttribute('data-clear-generator')){ui.generatorPlan=null;return renderPage()}
   if(b.hasAttribute('data-add-exercise'))return editExercise();if(b.dataset.editExercise)return editExercise(b.dataset.editExercise);if(b.dataset.deleteExercise){if(confirm('Oefening verwijderen? Trainingsplannen met deze oefening houden mogelijk een ontbrekende verwijzing.')){state.exercises=state.exercises.filter(x=>x.id!==b.dataset.deleteExercise);save()}return}
