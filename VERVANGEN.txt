@@ -1,0 +1,28 @@
+FOOTBALL COACH - VERVANGPAKKET 2.1.2
+
+Vervang in GitHub exact deze vier bestanden:
+1. app.js
+2. style.css
+3. sw.js
+4. index.html
+
+NIET vervangen:
+- starter-data.js
+- starter-data.json
+- manifest.json
+- icon-192.png
+- icon-512.png
+
+Na de commits:
+- sluit de geïnstalleerde web-app/Safari-tab volledig;
+- open opnieuw;
+- ververs de pagina eenmaal indien nodig.
+
+Nieuwe functies in dit pakket:
+- klik spelernaam -> volledig spelersprofiel;
+- Bewerken vanuit lijst en profiel;
+- Uit selectie vanuit lijst en profiel;
+- historie wordt behouden bij uit selectie halen;
+- responsive spelersprofiel voor laptop, iPad en iPhone;
+- mobiele spelerslijst als kaarten;
+- nieuwe cacheversie zodat GitHub Pages de nieuwe code laadt.
