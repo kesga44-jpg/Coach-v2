@@ -1,0 +1,8 @@
+/* Football Coach v2.1.5 add-on */
+.coach-sync-pill{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card,#fff);font-size:.75rem;font-weight:800;color:var(--muted);white-space:nowrap}
+.coach-sync-pill.connected{color:#0b6b46;border-color:#b9ddce;background:#eaf7f1}
+.auto-sync-info{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--soft,#f7faf8)}
+.auto-sync-info p{margin:5px 0 0}
+.permanent-delete-player{border-color:#e4c4c7!important;color:#9e3f48!important}
+@media(max-width:720px){.coach-sync-pill{font-size:.68rem;padding:6px 8px}.top-actions{gap:6px}}
+@media(max-width:520px){.coach-sync-pill{display:none}}
