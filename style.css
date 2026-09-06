@@ -38,3 +38,13 @@
 
 /* Spelerslijst wordt op telefoon kaarten in plaats van een brede tabel. */
 @media(max-width:650px){.players-table{min-width:0!important}.players-table thead{display:none}.players-table,.players-table tbody,.players-table tr,.players-table td{display:block;width:100%}.players-table tr{border:1px solid var(--line);background:#fff;border-radius:14px;padding:14px;margin-bottom:10px}.players-table td{border:0;padding:3px 0}.players-table td:first-child{font-size:16px;margin-bottom:4px}.players-table td:nth-child(3),.players-table td:nth-child(5),.players-table td:nth-child(6){display:none}.players-table td:nth-child(7){margin-top:10px}.players-table .row-actions{justify-content:flex-start;display:flex;flex-wrap:wrap;gap:6px}.players-table .row-actions .btn{flex:1 1 auto}}
+
+
+/* v2.1.4 · teamindeling en bankselectie */
+.player-chip.used{opacity:1;background:#173128;color:#fff;border-color:#173128}
+.player-chip.bench-selected{background:#e8f5ed;color:#0d6642;border-color:#8fc5a7}
+.player-chip.not-selected{opacity:.66}
+.player-chip .selection-state{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:999px;font-size:8px;font-weight:900;letter-spacing:.03em;background:rgba(0,0,0,.06)}
+.player-chip.used .selection-state{background:rgba(255,255,255,.16)}
+.player-chip.bench-selected .selection-state{background:#d2eadc}
+@media(max-width:560px){.player-chip{min-height:38px}.player-chip .selection-state{display:block;margin:4px 0 0}}
