@@ -1,4 +1,4 @@
-console.info('Football Coach update 2.3.0 geladen');
+console.info('Football Coach update 2.3.1 geladen');
 // Football Coach update v2.2
 // Adds: central Importeren hub + Man of the Match per match + MOTM season statistics.
 // Load this file AFTER app.js.
@@ -675,4 +675,89 @@ console.info('Football Coach update 2.3.0 geladen');
   activateResponsiveNav();
 
   window.addEventListener('resize', activateResponsiveNav);
+})();
+
+// v2.3.1 — training alleen voorkeursteam; wedstrijd alle beschikbare teams
+(() => {
+  const isTraining231 = ev => !!ev && state.trainings.some(t=>t.id===ev.id);
+  const isMatch231 = ev => !!ev && state.matches.some(m=>m.id===ev.id);
+
+  eventSquad = function(ev){
+    if(!ev) return [];
+    const teamId = ev.teamId || ui.teamId;
+    const allowed = isMatch231(ev) ? availablePlayersForTeam(teamId) : playersForTeam(teamId);
+    const allowedIds = new Set(allowed.map(p=>p.id));
+
+    if(Array.isArray(ev.squadPlayerIds) && ev.squadPlayerIds.length){
+      return ev.squadPlayerIds.map(playerById).filter(p=>p && p.active!==false && allowedIds.has(p.id));
+    }
+    return allowed;
+  };
+
+  squadForm = function(ev){
+    const teamId = ev.teamId || ui.teamId;
+
+    if(isTraining231(ev)){
+      const own = playersForTeam(teamId);
+      const selected = Array.isArray(ev.squadPlayerIds)&&ev.squadPlayerIds.length
+        ? ev.squadPlayerIds.filter(pid=>own.some(p=>p.id===pid))
+        : own.map(p=>p.id);
+
+      return `<p class="muted small">Trainingen gebruiken alleen spelers waarvan <strong>${esc(teamName(teamId))}</strong> het voorkeursteam is.</p>
+      <label class="check-item" style="margin-bottom:14px"><input id="squadUseWholeTeam" type="checkbox" ${!Array.isArray(ev.squadPlayerIds)||!ev.squadPlayerIds.length?'checked':''}> Hele voorkeursteam gebruiken</label>
+      <h3 class="section-title">Voorkeursteam</h3>
+      <div class="check-grid">${own.map(p=>`<label class="check-item"><input type="checkbox" name="squadPlayer" value="${p.id}" ${selected.includes(p.id)?'checked':''}> ${esc(p.name)}${p.position?` <span class="muted tiny">· ${esc(p.position)}</span>`:''}</label>`).join('')}</div>`;
+    }
+
+    const own = playersForTeam(teamId);
+    const extra = availablePlayersForTeam(teamId).filter(p=>p.primaryTeamId!==teamId);
+    const all = [...own,...extra];
+    const selected = Array.isArray(ev.squadPlayerIds)&&ev.squadPlayerIds.length
+      ? ev.squadPlayerIds.filter(pid=>all.some(p=>p.id===pid))
+      : all.map(p=>p.id);
+
+    return `<p class="muted small">Wedstrijden gebruiken alle spelers die <strong>${esc(teamName(teamId))}</strong> bij “beschikbaar voor teams” hebben staan, ook wanneer hun voorkeursteam anders is.</p>
+    <label class="check-item" style="margin-bottom:14px"><input id="squadUseWholeTeam" type="checkbox" ${!Array.isArray(ev.squadPlayerIds)||!ev.squadPlayerIds.length?'checked':''}> Alle beschikbare spelers gebruiken</label>
+    <h3 class="section-title">Eigen voorkeursteam</h3>
+    <div class="check-grid">${own.map(p=>`<label class="check-item"><input type="checkbox" name="squadPlayer" value="${p.id}" ${selected.includes(p.id)?'checked':''}> ${esc(p.name)}</label>`).join('')}</div>
+    ${extra.length?`<h3 class="section-title" style="margin-top:18px">Beschikbaar vanuit andere voorkeursteams</h3><div class="check-grid">${extra.map(p=>`<label class="check-item"><input type="checkbox" name="squadPlayer" value="${p.id}" ${selected.includes(p.id)?'checked':''}> ${esc(p.name)} <span class="muted tiny">· voorkeur: ${esc(teamName(p.primaryTeamId))}</span></label>`).join('')}</div>`:''}`;
+  };
+
+  editEventSquad = function(id){
+    const ev = eventById(id);
+    if(!ev) return;
+    modal('Groep voor deze activiteit', squadForm(ev), ()=>{
+      const useWhole = $('#squadUseWholeTeam')?.checked;
+      const checked = $$('input[name=squadPlayer]:checked').map(x=>x.value);
+      const allowed = isMatch231(ev) ? availablePlayersForTeam(ev.teamId) : playersForTeam(ev.teamId);
+      const allowedIds = new Set(allowed.map(p=>p.id));
+      ev.squadPlayerIds = useWhole ? null : checked.filter(pid=>allowedIds.has(pid));
+
+      if(isMatch231(ev)){
+        const selectedIds = new Set(eventPlayerIds(ev));
+        ev.benchIds = (ev.benchIds||[]).filter(pid=>selectedIds.has(pid));
+        Object.keys(ev.lineup||{}).forEach(slot=>{
+          if(ev.lineup[slot] && !selectedIds.has(ev.lineup[slot])) ev.lineup[slot]=null;
+        });
+      }
+      return true;
+    });
+  };
+
+  state.trainings.forEach(t=>{
+    if(!Array.isArray(t.squadPlayerIds)||!t.squadPlayerIds.length) return;
+    const allowed=new Set(playersForTeam(t.teamId).map(p=>p.id));
+    t.squadPlayerIds=t.squadPlayerIds.filter(pid=>allowed.has(pid));
+    if(!t.squadPlayerIds.length)t.squadPlayerIds=null;
+  });
+
+  state.matches.forEach(m=>{
+    if(!Array.isArray(m.squadPlayerIds)||!m.squadPlayerIds.length) return;
+    const allowed=new Set(availablePlayersForTeam(m.teamId).map(p=>p.id));
+    m.squadPlayerIds=m.squadPlayerIds.filter(pid=>allowed.has(pid));
+    if(!m.squadPlayerIds.length)m.squadPlayerIds=null;
+  });
+
+  save({render:false});
+  renderPage();
 })();

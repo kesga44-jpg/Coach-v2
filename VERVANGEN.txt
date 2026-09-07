@@ -1,39 +1,18 @@
-FOOTBALL COACH v2.3.0 — RESPONSIVE NAVIGATIE
+FOOTBALL COACH v2.3.1
 
-Vervang in GitHub:
+Vervang:
 - index.html
 - sw.js
 - coach-update-v2.2.js
 
-Navigatie:
-MOBIEL (<700 px)
-- vaste onderbalk
-- Vandaag
-- Team
-- Wedstrijden
-- Statistieken
-- Meer
+Regels:
+TRAININGEN = alleen spelers met dit team als voorkeursteam.
+WEDSTRIJDEN = alle spelers die dit team bij 'beschikbaar voor teams' hebben staan.
 
-IPAD/TABLET (700–1199 px)
-- compacte vaste zijrail met iconen
-- Vandaag
-- Team
-- Aanwezigheid
-- Trainingen
-- Wedstrijden
-- Statistieken
-- Tactiek
-- Meer
+Een speler met voorkeursteam O23 en beschikbaar voor O23 + 1:
+- training O23: ja
+- training 1: nee
+- wedstrijd O23: ja
+- wedstrijd 1: ja
 
-LAPTOP/DESKTOP (>=1200 px)
-- volledige bestaande zijbalk met labels
-
-De app kiest dit automatisch op basis van schermbreedte.
-Geen aparte installatie nodig.
-
-Bestaande functies blijven aanwezig:
-- Man of the Match per wedstrijd
-- MOTM seizoensstatistieken
-- trainingen verwijderen
-- wedstrijden verwijderen
-- centrale import
+Bij wedstrijden kan zo'n speler ook in de selectie, op de bank, in de basisopstelling, bij wedstrijdstatistieken en als Man of the Match.
