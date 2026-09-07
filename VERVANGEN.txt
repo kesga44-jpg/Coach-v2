@@ -1,18 +1,29 @@
-FOOTBALL COACH v2.3.1
+FOOTBALL COACH v2.3.2
 
-Vervang:
+Vervang in GitHub:
 - index.html
 - sw.js
 - coach-update-v2.2.js
 
-Regels:
-TRAININGEN = alleen spelers met dit team als voorkeursteam.
-WEDSTRIJDEN = alle spelers die dit team bij 'beschikbaar voor teams' hebben staan.
+NIEUW — AUTOMATISCHE WEDSTRIJDREGISTRATIE
+- Speler in basisopstelling = automatisch wedstrijd + basisplaats.
+- Speler op bank = automatisch wedstrijd + bankregistratie.
+- Geen aparte handmatige invoer meer nodig voor 'wedstrijd gespeeld' of 'basis'.
+- Spelersprofiel toont automatisch alle gespeelde wedstrijden, ook voor andere teams.
+- Per wedstrijd: datum, team, tegenstander, thuis/uit-volgorde, Basis/Bank, uitslag, minuten, goals en assists.
+- Statistieken tonen automatisch Wedstrijden / Basis / Bank / MOTM.
+- Minuten, goals, assists en kaarten blijven aanvullende gegevens.
 
-Een speler met voorkeursteam O23 en beschikbaar voor O23 + 1:
-- training O23: ja
-- training 1: nee
-- wedstrijd O23: ja
-- wedstrijd 1: ja
+WANNEER TELT EEN WEDSTRIJD ALS GESPEELD?
+- Zodra er een uitslag is ingevuld, OF
+- zodra de wedstrijddatum in het verleden ligt.
+Hierdoor telt een vooraf gemaakte opstelling voor een toekomstige wedstrijd nog niet als gespeelde wedstrijd.
 
-Bij wedstrijden kan zo'n speler ook in de selectie, op de bank, in de basisopstelling, bij wedstrijdstatistieken en als Man of the Match.
+TEAMREGELS BLIJVEN:
+- Training = alleen voorkeursteam.
+- Wedstrijd = alle teams waarvoor de speler beschikbaar staat.
+
+IPAD
+- Portrait: duidelijke donkere compacte zijrail.
+- Landscape: bredere compacte zijbalk met iconen + labels.
+- Betere contrasten en meer bruikbare ruimte voor de inhoud.

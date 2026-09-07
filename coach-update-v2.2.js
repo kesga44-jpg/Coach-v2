@@ -1,4 +1,4 @@
-console.info('Football Coach update 2.3.1 geladen');
+console.info('Football Coach update 2.3.2 geladen');
 // Football Coach update v2.2
 // Adds: central Importeren hub + Man of the Match per match + MOTM season statistics.
 // Load this file AFTER app.js.
@@ -759,5 +759,231 @@ console.info('Football Coach update 2.3.1 geladen');
   });
 
   save({render:false});
+  renderPage();
+})();
+
+// v2.3.2 — automatische wedstrijdregistratie + verbeterde iPad navigatie
+(() => {
+  function matchIsPlayed232(m){
+    if(!m) return false;
+    const hasScore = m.goalsFor !== '' || m.goalsAgainst !== '';
+    return hasScore || (m.date && m.date < TODAY());
+  }
+
+  function playerMatchRole232(m, playerId){
+    const starter = Object.values(m.lineup || {}).includes(playerId);
+    if(starter) return 'Basis';
+    if((m.benchIds || []).includes(playerId)) return 'Bank';
+
+    // Terugwaartse compatibiliteit met eerder handmatig opgeslagen statistieken.
+    const s = m.playerStats?.[playerId];
+    if(s?.started) return 'Basis';
+    if(s && matchIsPlayed232(m)) return 'Gespeeld';
+    return null;
+  }
+
+  function playerMatchHistory232(playerId, teamId=null){
+    return state.matches
+      .filter(m => (!teamId || m.teamId === teamId) && matchIsPlayed232(m))
+      .map(m => ({m, role:playerMatchRole232(m, playerId)}))
+      .filter(x => x.role)
+      .sort((a,b) => (b.m.date || '').localeCompare(a.m.date || '') ||
+                     (b.m.startTime || '').localeCompare(a.m.startTime || ''));
+  }
+
+  // Wedstrijden/basis/bank komen nu automatisch uit opstelling + bank.
+  // Minuten/goals/assists/kaarten blijven aanvullende statistieken.
+  matchTotals = function(playerId, teamId=ui.teamId){
+    let games=0, starts=0, bench=0, minutes=0, goals=0, assists=0, yellow=0, red=0, motm=0;
+
+    state.matches.filter(m => !teamId || m.teamId === teamId).forEach(m => {
+      const role = matchIsPlayed232(m) ? playerMatchRole232(m, playerId) : null;
+      const s = m.playerStats?.[playerId] || {};
+
+      if(role){
+        games++;
+        if(role === 'Basis') starts++;
+        if(role === 'Bank') bench++;
+      }
+
+      // Alleen aanvullende velden uit playerStats; geen handmatige 'gespeeld/basis' meer nodig.
+      minutes += number(s.minutes);
+      goals += number(s.goals);
+      assists += number(s.assists);
+      yellow += number(s.yellow);
+      red += number(s.red);
+
+      if(m.manOfTheMatchPlayerId === playerId) motm++;
+    });
+
+    return {games, starts, bench, minutes, goals, assists, yellow, red, motm};
+  };
+
+  // Spelersprofiel: automatisch wedstrijdlogboek over ALLE teams waarvoor de speler heeft gespeeld.
+  const previousRenderPlayerProfile232 = renderPlayerProfilePage;
+  renderPlayerProfilePage = function(){
+    let html = previousRenderPlayerProfile232();
+    const p = playerById(ui.playerId);
+    if(!p) return html;
+
+    const history = playerMatchHistory232(p.id);
+    const allTotals = history.reduce((a,x)=>{
+      a.games++;
+      if(x.role==='Basis') a.starts++;
+      if(x.role==='Bank') a.bench++;
+      return a;
+    }, {games:0,starts:0,bench:0});
+
+    // Maak in de bestaande wedstrijdkaart basis én bank expliciet.
+    html = html.replace(
+      /<div class="card player-stat-card"><span>Wedstrijden<\/span><strong>.*?<\/strong><small>.*?<\/small><\/div>/,
+      `<div class="card player-stat-card"><span>Wedstrijden</span><strong>${allTotals.games}</strong><small>${allTotals.starts} basis · ${allTotals.bench} bank</small></div>`
+    );
+
+    const rows = history.map(({m,role})=>{
+      const team = teamName(m.teamId);
+      const home = m.homeAway === 'Uit'
+        ? `${esc(m.opponent||'Tegenstander')} – ${esc(team)}`
+        : `${esc(team)} – ${esc(m.opponent||'Tegenstander')}`;
+      const score = (m.goalsFor!=='' || m.goalsAgainst!=='')
+        ? (m.homeAway==='Uit'
+          ? `${esc(m.goalsAgainst||0)}–${esc(m.goalsFor||0)}`
+          : `${esc(m.goalsFor||0)}–${esc(m.goalsAgainst||0)}`)
+        : '–';
+      const s = m.playerStats?.[p.id] || {};
+      return `<tr>
+        <td>${fmtDate(m.date)}</td>
+        <td>${esc(team)}</td>
+        <td><strong>${home}</strong><div class="muted tiny">${esc(m.competition||'Wedstrijd')}</div></td>
+        <td><span class="badge ${role==='Basis'?'green':role==='Bank'?'blue':''}">${esc(role)}</span></td>
+        <td>${score}</td>
+        <td>${number(s.minutes)||'–'}</td>
+        <td>${number(s.goals)||0}</td>
+        <td>${number(s.assists)||0}</td>
+      </tr>`;
+    }).join('');
+
+    const historyCard = `
+      <section class="card player-match-history" style="margin-top:16px">
+        <div class="card-head">
+          <div><p class="eyebrow">WEDSTRIJDLOGBOEK</p><h2>Gespeelde wedstrijden</h2>
+          <p class="muted small">Automatisch opgebouwd uit de basisopstelling en bank. Je hoeft een gespeelde wedstrijd of basisplaats niet meer apart in te voeren.</p></div>
+          <span class="badge green">${allTotals.games} wedstrijd${allTotals.games===1?'':'en'}</span>
+        </div>
+        ${history.length ? `<div class="table-wrap"><table>
+          <thead><tr><th>Datum</th><th>Team</th><th>Wedstrijd</th><th>Rol</th><th>Uitslag</th><th>Min</th><th>G</th><th>A</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>` : `<div class="empty">Nog geen gespeelde wedstrijden vanuit een basisopstelling of bankregistratie.</div>`}
+      </section>`;
+
+    return html + historyCard;
+  };
+
+  // Statistieken: naast 'Basis' ook automatisch 'Bank'.
+  const previousRenderStats232 = renderStats;
+  renderStats = function(){
+    const base = previousRenderStats232();
+    const team = activeTeam();
+    const players = availablePlayersForTeam(team.id)
+      .map(p => ({p, m:matchTotals(p.id,team.id)}))
+      .filter(x => x.m.games || x.m.starts || x.m.bench)
+      .sort((a,b)=>b.m.games-a.m.games || b.m.starts-a.m.starts || a.p.name.localeCompare(b.p.name,'nl'));
+
+    const extra = `<section class="card" style="margin-top:16px">
+      <div class="card-head"><div><p class="eyebrow">AUTOMATISCHE REGISTRATIE</p><h2>Basis & bank</h2>
+      <p class="muted small">Afgeleid uit de opgeslagen wedstrijdopstellingen. Ook spelers met een ander voorkeursteam verschijnen hier als ze voor ${esc(team.name)} hebben gespeeld.</p></div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Speler</th><th>Wedstrijden</th><th>Basis</th><th>Bank</th><th>MOTM</th></tr></thead>
+        <tbody>${players.length ? players.map(x=>`<tr>
+          <td><button class="link-button" data-profile-player="${x.p.id}">${esc(x.p.name)}</button></td>
+          <td><strong>${x.m.games}</strong></td><td>${x.m.starts}</td><td>${x.m.bench}</td><td>${x.m.motm}</td>
+        </tr>`).join('') : `<tr><td colspan="5" class="muted">Nog geen gespeelde wedstrijden geregistreerd.</td></tr>`}</tbody>
+      </table></div>
+    </section>`;
+    return base + extra;
+  };
+
+  // iPad navigatie opnieuw: duidelijke zijbalk met contrast en betere ruimteverdeling.
+  if(!document.querySelector('#coach-ipad-nav-v232')){
+    const style = document.createElement('style');
+    style.id = 'coach-ipad-nav-v232';
+    style.textContent = `
+      @media (min-width:700px) and (max-width:1199px){
+        .coach-tablet-rail{
+          display:flex!important;
+          background:#102d24!important;
+          color:#fff!important;
+          border-right:1px solid rgba(255,255,255,.14)!important;
+          box-shadow:8px 0 24px rgba(0,0,0,.08)!important;
+          opacity:1!important;
+        }
+        .coach-tablet-brand{
+          background:rgba(255,255,255,.16)!important;
+          color:#fff!important;
+        }
+        .coach-tablet-nav button{
+          color:rgba(255,255,255,.82)!important;
+          opacity:1!important;
+        }
+        .coach-tablet-nav button span,
+        .coach-tablet-nav button small{
+          color:inherit!important;
+          opacity:1!important;
+        }
+        .coach-tablet-nav button.active{
+          background:rgba(255,255,255,.16)!important;
+          color:#fff!important;
+        }
+      }
+
+      /* iPad portrait: smalle iconenrail */
+      @media (min-width:700px) and (max-width:1199px) and (orientation:portrait){
+        .coach-tablet-rail{width:88px!important}
+        .main-area{margin-left:88px!important;width:calc(100% - 88px)!important}
+        .coach-tablet-nav button{min-height:60px!important}
+        .coach-tablet-nav button small{font-size:10px!important}
+      }
+
+      /* iPad landscape: compacte maar volwaardige zijbalk */
+      @media (min-width:700px) and (max-width:1199px) and (orientation:landscape){
+        .coach-tablet-rail{
+          width:188px!important;
+          align-items:stretch!important;
+          padding-left:12px!important;
+          padding-right:12px!important;
+        }
+        .main-area{
+          margin-left:188px!important;
+          width:calc(100% - 188px)!important;
+        }
+        .coach-tablet-brand{
+          width:auto!important;
+          height:48px!important;
+          padding:0 14px!important;
+          justify-content:flex-start!important;
+        }
+        .coach-tablet-brand::after{
+          content:' Full Speed';
+          margin-left:8px;
+          font-size:13px;
+          white-space:nowrap;
+        }
+        .coach-tablet-nav button{
+          min-height:48px!important;
+          flex-direction:row!important;
+          justify-content:flex-start!important;
+          gap:11px!important;
+          padding:8px 12px!important;
+        }
+        .coach-tablet-nav button span{font-size:18px!important;width:22px;text-align:center}
+        .coach-tablet-nav button small{font-size:12px!important;text-align:left!important}
+        .content{padding-left:22px!important;padding-right:22px!important}
+      }
+
+      .player-match-history table{min-width:720px}
+    `;
+    document.head.appendChild(style);
+  }
+
   renderPage();
 })();
