@@ -1,16 +1,39 @@
-FOOTBALL COACH — VERVANG DEZE 3 BESTANDEN IN GITHUB
+FOOTBALL COACH v2.3.0 — RESPONSIVE NAVIGATIE
 
-1. index.html
-2. sw.js
-3. coach-update-v2.2.js
+Vervang in GitHub:
+- index.html
+- sw.js
+- coach-update-v2.2.js
 
-Laat app.js, style.css, starter-data.js en de rest staan.
+Navigatie:
+MOBIEL (<700 px)
+- vaste onderbalk
+- Vandaag
+- Team
+- Wedstrijden
+- Statistieken
+- Meer
 
-Na commit:
-- Open de GitHub Pages-site één keer in Safari.
-- Sluit daarna de beginscherm-app volledig en open opnieuw.
-- Je ziet nu 'Importeren' in de navigatie.
-- Bij iedere wedstrijd kun je Man of the Match kiezen.
-- Bij Statistieken verschijnt de MOTM-seizoensranglijst.
+IPAD/TABLET (700–1199 px)
+- compacte vaste zijrail met iconen
+- Vandaag
+- Team
+- Aanwezigheid
+- Trainingen
+- Wedstrijden
+- Statistieken
+- Tactiek
+- Meer
 
-De cacheversie is verhoogd naar 2.2.1, zodat de oude interface niet meer uit de service-worker-cache blijft komen.
+LAPTOP/DESKTOP (>=1200 px)
+- volledige bestaande zijbalk met labels
+
+De app kiest dit automatisch op basis van schermbreedte.
+Geen aparte installatie nodig.
+
+Bestaande functies blijven aanwezig:
+- Man of the Match per wedstrijd
+- MOTM seizoensstatistieken
+- trainingen verwijderen
+- wedstrijden verwijderen
+- centrale import

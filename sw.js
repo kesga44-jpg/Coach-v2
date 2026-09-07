@@ -1,4 +1,4 @@
-const CACHE='football-coach-v2.2.1';
+const CACHE='football-coach-v2.3.0';
 const CORE=[
   './','./index.html','./style.css','./starter-data.js','./app.js',
   './coach-update-v2.2.js','./manifest.json','./icon-192.png','./icon-512.png'

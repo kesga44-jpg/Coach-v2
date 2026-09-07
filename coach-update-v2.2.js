@@ -1,4 +1,4 @@
-console.info('Football Coach update 2.2.1 geladen');
+console.info('Football Coach update 2.3.0 geladen');
 // Football Coach update v2.2
 // Adds: central Importeren hub + Man of the Match per match + MOTM season statistics.
 // Load this file AFTER app.js.
@@ -427,4 +427,252 @@ console.info('Football Coach update 2.2.1 geladen');
   normalize();
   addImportNav();
   renderPage();
+})();
+
+
+// v2.2.2 — trainingen en wedstrijden verwijderen
+(() => {
+  const renderTrainingsBeforeDelete = renderTrainings;
+  renderTrainings = function() {
+    let html = renderTrainingsBeforeDelete();
+    const t = trainingById(ui.trainingId);
+    if (t && !html.includes(`data-delete-training="${t.id}"`)) {
+      html = html.replace(
+        `<button class="btn ghost" data-edit-training="${t.id}">Bewerken</button>`,
+        `<button class="btn ghost" data-edit-training="${t.id}">Bewerken</button><button class="btn danger" data-delete-training="${t.id}">Verwijderen</button>`
+      );
+    }
+    return html;
+  };
+
+  const renderMatchesBeforeDelete = renderMatches;
+  renderMatches = function() {
+    let html = renderMatchesBeforeDelete();
+    const m = matchById(ui.matchId);
+    if (m && !html.includes(`data-delete-match="${m.id}"`)) {
+      html = html.replace(
+        `<button class="btn ghost" data-edit-match="${m.id}">Bewerken</button>`,
+        `<button class="btn ghost" data-edit-match="${m.id}">Bewerken</button><button class="btn danger" data-delete-match="${m.id}">Verwijderen</button>`
+      );
+    }
+    return html;
+  };
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+
+    if (b.dataset.deleteTraining) {
+      const t = trainingById(b.dataset.deleteTraining);
+      if (!t) return;
+      const label = `${fmtDate(t.date)}${t.focus ? ` · ${t.focus}` : ''}`;
+      if (!confirm(`Training verwijderen?\n\n${label}\n\nAanwezigheid en trainingsplan van alleen deze training worden ook verwijderd.`)) return;
+      state.trainings = state.trainings.filter(x => x.id !== t.id);
+      if (ui.trainingId === t.id) ui.trainingId = null;
+      if (ui.attendanceId === t.id) ui.attendanceId = null;
+      save();
+      toast('Training verwijderd');
+      return;
+    }
+
+    if (b.dataset.deleteMatch) {
+      const m = matchById(b.dataset.deleteMatch);
+      if (!m) return;
+      const label = `${fmtDate(m.date)}${m.opponent ? ` · ${m.opponent}` : ''}`;
+      if (!confirm(`Wedstrijd verwijderen?\n\n${label}\n\nOpstelling, statistieken en Man of the Match van alleen deze wedstrijd worden ook verwijderd.`)) return;
+      state.matches = state.matches.filter(x => x.id !== m.id);
+      if (ui.matchId === m.id) ui.matchId = null;
+      if (ui.attendanceId === m.id) ui.attendanceId = null;
+      save();
+      toast('Wedstrijd verwijderd');
+      return;
+    }
+  });
+})();
+
+
+// v2.3.0 — apparaat-afhankelijke navigatie
+(() => {
+  const NAV_BREAKPOINT_MOBILE = 700;
+  const NAV_BREAKPOINT_TABLET = 1200;
+
+  function injectResponsiveCoachStyles(){
+    if(document.querySelector('#coach-responsive-nav-v230')) return;
+    const style = document.createElement('style');
+    style.id = 'coach-responsive-nav-v230';
+    style.textContent = `
+      /* basis */
+      .coach-tablet-rail{display:none}
+      .coach-mobile-bottom{display:none}
+      .coach-device-label{display:none}
+
+      /* MOBIEL */
+      @media (max-width:${NAV_BREAKPOINT_MOBILE-1}px){
+        .sidebar{display:none!important}
+        .main-area{margin-left:0!important;width:100%!important;min-width:0}
+        .topbar{padding-left:14px!important;padding-right:14px!important}
+        .content{padding:14px!important;padding-bottom:92px!important}
+        .bottom-nav{display:none!important}
+
+        .coach-mobile-bottom{
+          position:fixed;left:0;right:0;bottom:0;z-index:1000;
+          display:grid;grid-template-columns:repeat(5,1fr);
+          background:var(--surface,#fff);
+          border-top:1px solid rgba(0,0,0,.10);
+          padding:7px 6px calc(7px + env(safe-area-inset-bottom));
+          box-shadow:0 -8px 26px rgba(0,0,0,.08);
+        }
+        .coach-mobile-bottom button{
+          border:0;background:transparent;display:flex;flex-direction:column;
+          align-items:center;justify-content:center;gap:3px;min-height:50px;
+          font:inherit;color:inherit;border-radius:11px;padding:4px 2px;
+        }
+        .coach-mobile-bottom button span{font-size:20px;line-height:1}
+        .coach-mobile-bottom button small{font-size:10.5px;white-space:nowrap}
+        .coach-mobile-bottom button.active{
+          background:rgba(11,93,59,.10);font-weight:700
+        }
+
+        .top-actions .team-select{max-width:128px}
+        .toolbar{align-items:flex-start}
+        .toolbar,.toolbar .left,.toolbar .right{flex-wrap:wrap}
+        .table-wrap{overflow-x:auto}
+      }
+
+      /* IPAD / TABLET */
+      @media (min-width:${NAV_BREAKPOINT_MOBILE}px) and (max-width:${NAV_BREAKPOINT_TABLET-1}px){
+        .sidebar{display:none!important}
+        .bottom-nav{display:none!important}
+        .main-area{
+          margin-left:84px!important;
+          width:calc(100% - 84px)!important;
+          min-width:0
+        }
+        .coach-tablet-rail{
+          position:fixed;left:0;top:0;bottom:0;z-index:1000;
+          width:84px;display:flex;flex-direction:column;align-items:center;
+          background:var(--sidebar,#0b1d17);
+          color:#fff;border-right:1px solid rgba(255,255,255,.08);
+          padding:14px 8px calc(14px + env(safe-area-inset-bottom));
+          overflow-y:auto;
+        }
+        .coach-tablet-brand{
+          width:48px;height:48px;border-radius:15px;display:grid;place-items:center;
+          margin:4px 0 16px;font-weight:800;
+          background:rgba(255,255,255,.12)
+        }
+        .coach-tablet-nav{
+          width:100%;display:flex;flex-direction:column;gap:5px
+        }
+        .coach-tablet-nav button{
+          width:100%;min-height:58px;border:0;background:transparent;color:inherit;
+          border-radius:13px;display:flex;flex-direction:column;align-items:center;
+          justify-content:center;gap:4px;font:inherit;padding:5px 2px
+        }
+        .coach-tablet-nav button span{font-size:19px}
+        .coach-tablet-nav button small{font-size:9px;line-height:1.05;text-align:center}
+        .coach-tablet-nav button.active{
+          background:rgba(255,255,255,.14);font-weight:700
+        }
+        .content{padding-bottom:24px!important}
+        .table-wrap{overflow-x:auto}
+      }
+
+      /* LAPTOP / DESKTOP */
+      @media (min-width:${NAV_BREAKPOINT_TABLET}px){
+        .sidebar{display:flex!important}
+        .bottom-nav{display:none!important}
+        .coach-mobile-bottom,.coach-tablet-rail{display:none!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const primaryMobile = [
+    ['dashboard','⌂','Vandaag'],
+    ['players','♙','Team'],
+    ['matches','⚽','Wedstrijden'],
+    ['stats','▥','Statistieken'],
+    ['more','•••','Meer']
+  ];
+
+  const tabletNav = [
+    ['dashboard','⌂','Vandaag'],
+    ['players','♙','Team'],
+    ['attendance','✓','Aanwezig'],
+    ['trainings','◫','Training'],
+    ['matches','⚽','Wedstrijd'],
+    ['stats','▥','Stats'],
+    ['tactics','↗','Tactiek'],
+    ['more','•••','Meer']
+  ];
+
+  function makeMobileNav(){
+    let nav = document.querySelector('.coach-mobile-bottom');
+    if(!nav){
+      nav = document.createElement('nav');
+      nav.className = 'coach-mobile-bottom';
+      nav.setAttribute('aria-label','Mobiele hoofdnavigatie');
+      document.body.appendChild(nav);
+    }
+    nav.innerHTML = primaryMobile.map(([page,icon,label]) =>
+      `<button type="button" data-responsive-page="${page}"><span>${icon}</span><small>${label}</small></button>`
+    ).join('');
+  }
+
+  function makeTabletRail(){
+    let rail = document.querySelector('.coach-tablet-rail');
+    if(!rail){
+      rail = document.createElement('aside');
+      rail.className = 'coach-tablet-rail';
+      rail.setAttribute('aria-label','iPad navigatie');
+      document.body.appendChild(rail);
+    }
+    rail.innerHTML = `<div class="coach-tablet-brand">FS</div>
+      <nav class="coach-tablet-nav">
+        ${tabletNav.map(([page,icon,label]) =>
+          `<button type="button" data-responsive-page="${page}"><span>${icon}</span><small>${label}</small></button>`
+        ).join('')}
+      </nav>`;
+  }
+
+  function activateResponsiveNav(){
+    const active = ui.page === 'player' ? 'players' : ui.page;
+    document.querySelectorAll('[data-responsive-page]').forEach(btn => {
+      const p = btn.dataset.responsivePage;
+      btn.classList.toggle('active', p === active || (p === 'more' && ![
+        'dashboard','players','attendance','trainings','matches','stats','tactics'
+      ].includes(active)));
+    });
+  }
+
+  function openResponsivePage(page){
+    if(page === 'more') return setPage('more');
+    setPage(page);
+  }
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-responsive-page]');
+    if(!btn) return;
+    openResponsivePage(btn.dataset.responsivePage);
+  });
+
+  const oldSetPageResponsive = setPage;
+  setPage = function(page){
+    oldSetPageResponsive(page);
+    activateResponsiveNav();
+  };
+
+  const oldRenderPageResponsive = renderPage;
+  renderPage = function(){
+    oldRenderPageResponsive();
+    activateResponsiveNav();
+  };
+
+  injectResponsiveCoachStyles();
+  makeMobileNav();
+  makeTabletRail();
+  activateResponsiveNav();
+
+  window.addEventListener('resize', activateResponsiveNav);
 })();
