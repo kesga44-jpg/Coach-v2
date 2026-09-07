@@ -1,22 +1,25 @@
-FOOTBALL COACH v2.1.5
+FOOTBALL COACH UPDATE v2.2
 
-Upload/vervang in dezelfde GitHub-map:
-1. VERVANG index.html
-2. VERVANG sw.js
-3. VOEG TOE upgrade-v2.1.5.js
-4. VOEG TOE upgrade-v2.1.5.css
+Bestanden:
+1. index.html -> vervang je huidige index.html
+2. coach-update-v2.2.js -> nieuw bestand toevoegen naast app.js
 
-app.js en style.css hoef je NIET te vervangen.
+Je bestaande app.js, style.css, starter-data.js, manifest en sync-instellingen blijven ongewijzigd.
 
-Verbeteringen:
-- Fix: een bewust lege eigen selectie (0 spelers) valt niet meer terug naar het hele primaire team.
-- Naast “Uit selectie” is er nu ook “Verwijderen” met dubbele waarschuwing.
-- Automatische sync na wijzigingen blijft actief (ca. 1,2 sec debounce).
-- Elke 30 sec controle op nieuwere clouddata van andere apparaten als de app zichtbaar is.
-- Extra sync bij app opnieuw openen/focus/online komen.
-- Laatste succesvolle synchronisatietijd zichtbaar bovenin en in Instellingen.
-- Handmatige knop blijft beschikbaar als noodknop.
+Nieuw:
+- Centrale pagina 'Importeren'
+- Bestemming kiezen: Oefeningen, Spelers, Trainingen, Wedstrijden, Seizoen, Coachnotities
+- PDF/DOCX/Excel/CSV/TXT analyseren
+- Eerst controle/preview, daarna importeren
+- Import-items vóór opslaan bewerken
+- Man of the Match kiezen per wedstrijd
+- Man of the Match wijzigen
+- MOTM zichtbaar in spelersprofiel
+- MOTM seizoensranglijst bij Statistieken
+- Bestaande data wordt automatisch compatibel gemaakt; geen reset nodig
 
-Belangrijk:
-Gebruik op alle apparaten exact dezelfde Secret key.
-De sync blijft versleuteld en gebruikt dezelfde bestaande Supabase-tabel coach_data.
+LET OP:
+De algemene importparser is bewust voorzichtig. Oefeningen gebruikt de bestaande documentanalyse.
+Bij agenda-achtige data werkt een regel met een herkenbare datum het betrouwbaarst, bijvoorbeeld:
+12-09-2026 Training hoge pressing
+19-09-2026 Tegen VV Voorbeeld
