@@ -1,28 +1,16 @@
-FOOTBALL COACH - VERVANGPAKKET 2.1.2
+FOOTBALL COACH — VERVANG DEZE 3 BESTANDEN IN GITHUB
 
-Vervang in GitHub exact deze vier bestanden:
-1. app.js
-2. style.css
-3. sw.js
-4. index.html
+1. index.html
+2. sw.js
+3. coach-update-v2.2.js
 
-NIET vervangen:
-- starter-data.js
-- starter-data.json
-- manifest.json
-- icon-192.png
-- icon-512.png
+Laat app.js, style.css, starter-data.js en de rest staan.
 
-Na de commits:
-- sluit de geïnstalleerde web-app/Safari-tab volledig;
-- open opnieuw;
-- ververs de pagina eenmaal indien nodig.
+Na commit:
+- Open de GitHub Pages-site één keer in Safari.
+- Sluit daarna de beginscherm-app volledig en open opnieuw.
+- Je ziet nu 'Importeren' in de navigatie.
+- Bij iedere wedstrijd kun je Man of the Match kiezen.
+- Bij Statistieken verschijnt de MOTM-seizoensranglijst.
 
-Nieuwe functies in dit pakket:
-- klik spelernaam -> volledig spelersprofiel;
-- Bewerken vanuit lijst en profiel;
-- Uit selectie vanuit lijst en profiel;
-- historie wordt behouden bij uit selectie halen;
-- responsive spelersprofiel voor laptop, iPad en iPhone;
-- mobiele spelerslijst als kaarten;
-- nieuwe cacheversie zodat GitHub Pages de nieuwe code laadt.
+De cacheversie is verhoogd naar 2.2.1, zodat de oude interface niet meer uit de service-worker-cache blijft komen.

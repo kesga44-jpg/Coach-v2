@@ -1,3 +1,4 @@
+console.info('Football Coach update 2.2.1 geladen');
 // Football Coach update v2.2
 // Adds: central Importeren hub + Man of the Match per match + MOTM season statistics.
 // Load this file AFTER app.js.
