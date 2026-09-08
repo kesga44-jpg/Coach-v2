@@ -48,3 +48,64 @@
 .player-chip.used .selection-state{background:rgba(255,255,255,.16)}
 .player-chip.bench-selected .selection-state{background:#d2eadc}
 @media(max-width:560px){.player-chip{min-height:38px}.player-chip .selection-state{display:block;margin:4px 0 0}}
+
+/* =========================================
+   v2.1.5 · mobiele breedte + wedstrijdbank
+   Alles blijft binnen de iPhone/iPad viewport.
+   ========================================= */
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+.app-shell,.main-area,.topbar,.content,#app{min-width:0;max-width:100%}
+.grid,.grid>*{min-width:0}
+.card,.toolbar,.toolbar .left,.toolbar .right,.pitch-wrap,.pitch,.bench-panel{min-width:0;max-width:100%}
+.bank-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.bank-head p{margin:4px 0 0}.bank-list{min-height:30px}.bench-picker .check-item span{display:flex;flex-direction:column;gap:2px}.bench-picker .check-item small{display:block;font-weight:500}
+
+@media(max-width:860px){
+  body{overflow-x:hidden}
+  .main-area{width:100%;max-width:100%;overflow-x:hidden}
+  .topbar{width:100%;max-width:100%;padding-left:14px;padding-right:14px;gap:10px}
+  .topbar>div:first-child{flex:1 1 auto;min-width:0;max-width:calc(100% - 54px)}
+  .topbar .eyebrow{max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
+  .topbar h1{max-width:100%;overflow-wrap:anywhere}
+  .top-actions{flex:0 0 auto;min-width:0}
+  .content{width:100%;max-width:100%;margin:0;padding-left:14px;padding-right:14px}
+  #app{width:100%;max-width:100%;overflow-x:hidden}
+  .grid.two,.grid.three,.stats-grid,.match-page-grid{width:100%;max-width:100%;grid-template-columns:minmax(0,1fr)}
+  .grid.two>*,.grid.three>*,.stats-grid>*,.match-page-grid>*{width:100%;max-width:100%;min-width:0}
+  .card{width:100%;max-width:100%;overflow:hidden}
+  .table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .pitch-wrap{display:block;width:100%;max-width:100%}
+  .pitch{width:100%;max-width:100%;height:auto;max-height:none}
+  .bench-panel{width:100%;margin-top:14px}
+  .match-main-card>.card-head{width:100%;max-width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start}
+  .match-main-card>.card-head>div{min-width:0}
+  .match-main-card>.card-head h2,.match-main-card>.card-head p{max-width:100%;overflow-wrap:anywhere}
+  .formation-select{width:auto;max-width:112px;min-width:92px}
+  .match-score{width:100%;max-width:100%;flex-wrap:wrap}
+  .match-toolbar{width:100%;max-width:100%}
+  .match-toolbar .left,.match-toolbar .right{width:100%;max-width:100%}
+  .match-toolbar select{min-width:0;max-width:100%}
+}
+
+@media(max-width:560px){
+  .topbar{padding:13px 14px 11px;min-height:76px}
+  .topbar h1{font-size:25px;line-height:1.03}
+  .topbar .eyebrow{font-size:9px;letter-spacing:1.35px}
+  .content{padding:14px 14px 100px}
+  .card{padding:15px}
+  .match-toolbar{display:grid;grid-template-columns:1fr;gap:10px}
+  .match-toolbar .left{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}
+  .match-toolbar .right{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .match-toolbar .btn{width:100%;min-width:0;padding-left:10px;padding-right:10px;white-space:normal}
+  .match-toolbar #matchSelect{width:100%;min-width:0}
+  .match-main-card>.card-head{gap:8px}
+  .match-main-card>.card-head h2{font-size:18px;line-height:1.15}
+  .match-main-card>.card-head .small{line-height:1.4}
+  .formation-select{max-width:96px;min-width:86px;padding-left:9px;padding-right:25px}
+  .match-score{display:grid;grid-template-columns:minmax(0,58px) auto minmax(0,58px);justify-content:center;gap:8px;margin:8px 0 16px}
+  .match-score .score-input{width:58px;min-width:0}
+  .match-score .btn{grid-column:1/-1;justify-self:center}
+  .pitch-slot{width:60px;min-height:44px;padding:5px;font-size:9px}
+  .bank-head{align-items:center}
+  .bank-head .btn{flex:0 0 auto}
+  .bench-picker{grid-template-columns:1fr}
+}
