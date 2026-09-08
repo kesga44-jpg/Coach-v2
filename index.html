@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.3.2">
+  <link rel="stylesheet" href="style.css?v=2.1.6">
 </head>
 <body>
   <div class="app-shell">
@@ -32,7 +32,6 @@
         <button class="nav-item" data-page="stats">▥ <span>Statistieken</span></button>
         <button class="nav-item" data-page="notes">✎ <span>Coachnotities</span></button>
         <button class="nav-item" data-page="documents">⌁ <span>Bronnen</span></button>
-        <button class="nav-item" data-page="imports">↥ <span>Importeren</span></button>
         <button class="nav-item" data-page="assistant">✦ <span>Coachassistent</span></button>
         <button class="nav-item" data-page="settings">⚙ <span>Instellingen</span></button>
       </nav>
@@ -50,9 +49,9 @@
 
   <nav class="bottom-nav" aria-label="Mobiele navigatie">
     <button class="active" data-page="dashboard"><span>⌂</span><small>Vandaag</small></button>
-    <button data-page="attendance"><span>✓</span><small>Aanwezig</small></button>
-    <button data-page="trainings"><span>◫</span><small>Training</small></button>
     <button data-page="players"><span>♙</span><small>Team</small></button>
+    <button data-page="matches"><span>⚽</span><small>Wedstrijden</small></button>
+    <button data-page="stats"><span>▥</span><small>Statistieken</small></button>
     <button data-page="more"><span>•••</span><small>Meer</small></button>
   </nav>
 
@@ -63,16 +62,14 @@
       <div class="modal-actions"><button value="cancel" class="btn ghost">Annuleren</button><button id="modalSave" value="default" class="btn primary">Opslaan</button></div>
     </form>
   </dialog>
-
   <input id="importFile" type="file" accept="application/json,.json" hidden>
   <input id="docFile" type="file" accept=".pdf,.docx,.xlsx,.xlsm,.xls,.txt,.md,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
   <div id="toast" class="toast" role="status"></div>
 
-  <script src="starter-data.js?v=2.3.2"></script>
+  <script src="starter-data.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.2/mammoth.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-  <script src="app.js?v=2.3.2"></script>
-  <script src="coach-update-v2.2.js?v=2.3.2"></script>
+  <script src="app.js?v=2.1.6"></script>
 </body>
 </html>

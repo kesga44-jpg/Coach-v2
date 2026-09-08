@@ -1,5 +1,5 @@
-const CACHE='football-coach-v2.1.5';
-const CORE=['./','./index.html','./style.css','./starter-data.js','./manifest.json','./icon-192.png','./icon-512.png'];
+const CACHE='football-coach-v2.1.6';
+const CORE=['./','./index.html','./style.css','./app.js','./starter-data.js','./manifest.json','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
