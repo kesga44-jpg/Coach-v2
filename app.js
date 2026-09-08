@@ -482,3 +482,449 @@ $('#quickAdd').onclick=()=>{if(ui.page==='players')editPlayer();else if(ui.page=
 $('#importFile').onchange=e=>{const f=e.target.files[0];if(f)importBackup(f);e.target.value=''};
 $('#docFile').onchange=e=>{const f=e.target.files[0];if(f)handleDocument(f);e.target.value=''};
 load();renderPage();initialSync();if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+
+/* =========================================================
+   FOOTBALL COACH v2.1.7
+   - responsive navigatie per device
+   - training alleen voorkeursteam
+   - wedstrijd alle beschikbare teams
+   - automatische basis/bank/wedstrijdregistratie
+   - speler-wedstrijdhistorie
+   - MOTM
+   - verwijderen activiteiten
+   - status Afgelast: telt nergens mee
+   ========================================================= */
+(() => {
+  const oldNormalize217 = normalize;
+  normalize = function(){
+    oldNormalize217();
+    state.trainings.forEach(t=>{
+      t.cancelled ??= false;
+      t.status ??= t.cancelled ? 'Afgelast' : 'Gepland';
+    });
+    state.matches.forEach(m=>{
+      m.cancelled ??= false;
+      m.status ??= m.cancelled ? 'Afgelast' : 'Gepland';
+      m.manOfTheMatchPlayerId ??= null;
+      m.matchType ??= (() => {
+        const s=(m.competition||'').toLowerCase();
+        if(/beker|cup/.test(s)) return 'Beker';
+        if(/oefen|friendly/.test(s)) return 'Oefen';
+        return 'Competitie';
+      })();
+    });
+    ui.matchTypeFilter ??= 'Alles';
+  };
+
+  function cancelled217(ev){
+    return !!(ev?.cancelled || ev?.status === 'Afgelast');
+  }
+  function isTraining217(ev){ return !!ev && state.trainings.some(t=>t.id===ev.id); }
+  function isMatch217(ev){ return !!ev && state.matches.some(m=>m.id===ev.id); }
+
+  // Dashboard-functies: afgelaste activiteiten overslaan als "volgende/laatste".
+  nextTraining = function(teamId=ui.teamId){
+    return state.trainings
+      .filter(t=>(!teamId||t.teamId===teamId)&&!cancelled217(t)&&t.date>=TODAY())
+      .sort((a,b)=>a.date.localeCompare(b.date))[0]||null;
+  };
+  latestTraining = function(teamId=ui.teamId){
+    return state.trainings
+      .filter(t=>(!teamId||t.teamId===teamId)&&!cancelled217(t)&&t.date<=TODAY())
+      .sort((a,b)=>b.date.localeCompare(a.date))[0]||null;
+  };
+  nextMatch = function(teamId=ui.teamId){
+    return state.matches
+      .filter(m=>(!teamId||m.teamId===teamId)&&!cancelled217(m)&&m.date>=TODAY())
+      .sort((a,b)=>a.date.localeCompare(b.date))[0]||null;
+  };
+
+  // Training = alleen voorkeursteam. Wedstrijd = alle teams waarvoor beschikbaar.
+  eventSquad = function(ev){
+    if(!ev) return [];
+    const teamId=ev.teamId||ui.teamId;
+    const allowed=isMatch217(ev)?availablePlayersForTeam(teamId):playersForTeam(teamId);
+    const allowedIds=new Set(allowed.map(p=>p.id));
+    if(Array.isArray(ev.squadPlayerIds)&&ev.squadPlayerIds.length){
+      return ev.squadPlayerIds.map(playerById).filter(p=>p&&p.active!==false&&allowedIds.has(p.id));
+    }
+    return allowed;
+  };
+
+  attendancePct = function(playerId,teamId=ui.teamId){
+    const past=state.trainings.filter(t=>
+      (!teamId||t.teamId===teamId) &&
+      !cancelled217(t) &&
+      t.date<=TODAY() &&
+      t.attendance &&
+      t.attendance[playerId]
+    );
+    if(!past.length) return null;
+    return Math.round(past.filter(t=>presentStatus(t.attendance[playerId])).length/past.length*100);
+  };
+
+  function matchPlayed217(m){
+    if(!m || cancelled217(m)) return false;
+    return (m.goalsFor!=='' || m.goalsAgainst!=='') || (m.date && m.date<TODAY());
+  }
+  function matchRole217(m,playerId){
+    if(!m || cancelled217(m)) return null;
+    if(Object.values(m.lineup||{}).includes(playerId)) return 'Basis';
+    if((m.benchIds||[]).includes(playerId)) return 'Bank';
+    const s=m.playerStats?.[playerId];
+    if(s?.started) return 'Basis';
+    if(s && matchPlayed217(m)) return 'Gespeeld';
+    return null;
+  }
+  function playerMatchHistory217(playerId,teamId=null){
+    return state.matches
+      .filter(m=>(!teamId||m.teamId===teamId)&&matchPlayed217(m))
+      .map(m=>({m,role:matchRole217(m,playerId)}))
+      .filter(x=>x.role)
+      .sort((a,b)=>(b.m.date||'').localeCompare(a.m.date||'')||(b.m.startTime||'').localeCompare(a.m.startTime||''));
+  }
+
+  matchTotals = function(playerId,teamId=ui.teamId){
+    let games=0,starts=0,bench=0,minutes=0,goals=0,assists=0,yellow=0,red=0,motm=0;
+    state.matches.filter(m=>(!teamId||m.teamId===teamId)&&!cancelled217(m)).forEach(m=>{
+      const role=matchPlayed217(m)?matchRole217(m,playerId):null;
+      const s=m.playerStats?.[playerId]||{};
+      if(role){
+        games++;
+        if(role==='Basis') starts++;
+        if(role==='Bank') bench++;
+      }
+      minutes+=number(s.minutes);
+      goals+=number(s.goals);
+      assists+=number(s.assists);
+      yellow+=number(s.yellow);
+      red+=number(s.red);
+      if(m.manOfTheMatchPlayerId===playerId && matchPlayed217(m)) motm++;
+    });
+    return {games,starts,bench,minutes,goals,assists,yellow,red,motm};
+  };
+
+  scheduleRow = function(e){
+    const d=new Date(e.date+'T12:00:00');
+    const isCancelled=cancelled217(e);
+    let title;
+    if(e.type==='Wedstrijd'){
+      const own=teamName(e.teamId);
+      title=e.homeAway==='Uit'
+        ? `${e.opponent||'Tegenstander'} – ${own}`
+        : `${own} – ${e.opponent||'Tegenstander'}`;
+    } else title=e.title||'Training';
+    return `<div class="schedule-row ${isCancelled?'cancelled-event':''}">
+      <div class="date-box"><strong>${d.getDate()}</strong><span>${d.toLocaleDateString('nl-NL',{month:'short'})}</span></div>
+      <div><strong>${esc(title)}</strong><div class="event-meta"><span class="muted small">${fmtDate(e.date)} ${esc(e.startTime||'')}</span>${e.focus?`<span class="chip">${esc(e.focus)}</span>`:''}${isCancelled?'<span class="badge red">Afgelast</span>':''}</div></div>
+      <span class="badge ${isCancelled?'red':e.type==='Training'?'green':'blue'}">${isCancelled?'Afgelast':esc(e.type)}</span>
+    </div>`;
+  };
+
+  squadForm = function(ev){
+    const teamId=ev.teamId||ui.teamId;
+    const match=isMatch217(ev);
+    const own=playersForTeam(teamId);
+    const extra=match?availablePlayersForTeam(teamId).filter(p=>p.primaryTeamId!==teamId):[];
+    const allowed=[...own,...extra];
+    const selected=Array.isArray(ev.squadPlayerIds)&&ev.squadPlayerIds.length
+      ? ev.squadPlayerIds.filter(pid=>allowed.some(p=>p.id===pid))
+      : allowed.map(p=>p.id);
+    return `<p class="muted small">${match
+      ? `Voor wedstrijden zijn alle spelers beschikbaar die <strong>${esc(teamName(teamId))}</strong> bij “beschikbaar voor teams” hebben staan.`
+      : `Trainingen gebruiken uitsluitend spelers waarvan <strong>${esc(teamName(teamId))}</strong> het voorkeursteam is.`
+    }</p>
+    <label class="check-item" style="margin-bottom:14px"><input id="squadUseWholeTeam" type="checkbox" ${!Array.isArray(ev.squadPlayerIds)||!ev.squadPlayerIds.length?'checked':''}> ${match?'Alle beschikbare spelers gebruiken':'Hele voorkeursteam gebruiken'}</label>
+    <h3 class="section-title">Voorkeursteam</h3>
+    <div class="check-grid">${own.map(p=>`<label class="check-item"><input type="checkbox" name="squadPlayer" value="${p.id}" ${selected.includes(p.id)?'checked':''}> ${esc(p.name)}</label>`).join('')}</div>
+    ${match&&extra.length?`<h3 class="section-title" style="margin-top:18px">Beschikbaar vanuit andere voorkeursteams</h3><div class="check-grid">${extra.map(p=>`<label class="check-item"><input type="checkbox" name="squadPlayer" value="${p.id}" ${selected.includes(p.id)?'checked':''}> ${esc(p.name)} <span class="muted tiny">· voorkeur: ${esc(teamName(p.primaryTeamId))}</span></label>`).join('')}</div>`:''}`;
+  };
+
+  editEventSquad = function(id){
+    const ev=eventById(id); if(!ev)return;
+    modal('Groep voor deze activiteit',squadForm(ev),()=>{
+      const allowed=isMatch217(ev)?availablePlayersForTeam(ev.teamId):playersForTeam(ev.teamId);
+      const allowedIds=new Set(allowed.map(p=>p.id));
+      ev.squadPlayerIds=$('#squadUseWholeTeam').checked?null:$$('input[name=squadPlayer]:checked').map(x=>x.value).filter(id=>allowedIds.has(id));
+      if(isMatch217(ev)){
+        const selectedIds=new Set(eventPlayerIds(ev));
+        ev.benchIds=(ev.benchIds||[]).filter(pid=>selectedIds.has(pid));
+        Object.keys(ev.lineup||{}).forEach(slot=>{
+          if(ev.lineup[slot]&&!selectedIds.has(ev.lineup[slot]))ev.lineup[slot]=null;
+        });
+      }
+      return true;
+    });
+  };
+
+  // Trainingformulier inclusief status.
+  trainingForm = function(t={}){
+    return `<div class="form-grid">
+      <div class="field"><label>Datum</label><input id="fDate" class="input" type="date" value="${esc(t.date||TODAY())}"></div>
+      <div class="field"><label>Starttijd</label><input id="fTime" class="input" type="time" value="${esc(t.startTime||state.team.trainingTime||'20:00')}"></div>
+      <div class="field"><label>Team</label><select id="fTeam">${teamOptions(t.teamId||ui.teamId)}</select></div>
+      <div class="field"><label>Status</label><select id="fTrainingStatus"><option value="Gepland" ${!cancelled217(t)?'selected':''}>Gepland</option><option value="Afgelast" ${cancelled217(t)?'selected':''}>Afgelast</option></select></div>
+      <div class="field"><label>Intensiteit</label><select id="fIntensity">${['Laag','Laag/middel','Middel','Middel/hoog','Hoog'].map(x=>`<option ${t.intensity===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="field full"><label>Trainingsfocus</label><input id="fFocus" class="input" placeholder="Hoge pressing, opbouw, omschakeling..." value="${esc(t.focus||'')}"></div>
+      <div class="field full"><label>Coachnotities</label><textarea id="fCoachNotes">${esc(t.coachNotes||'')}</textarea></div>
+      <div class="field full"><label>Overige notities</label><textarea id="fNotes">${esc(t.notes||'')}</textarea></div>
+    </div>`;
+  };
+
+  editTraining = function(id){
+    const t=id?trainingById(id):null;
+    modal(t?'Training bewerken':'Training toevoegen',trainingForm(t||{}),()=>{
+      const date=$('#fDate').value;if(!date){toast('Kies een datum');return false}
+      const obj=t||{id:uid('tr'),attendance:{},planItems:[],exerciseIds:[],squadPlayerIds:null};
+      const status=$('#fTrainingStatus').value;
+      Object.assign(obj,{date,startTime:$('#fTime').value,teamId:$('#fTeam').value,focus:$('#fFocus').value.trim(),intensity:$('#fIntensity').value,coachNotes:$('#fCoachNotes').value.trim(),notes:$('#fNotes').value.trim(),title:'Training',status,cancelled:status==='Afgelast'});
+      if(!t)state.trainings.push(obj);
+      state.trainings.sort((a,b)=>a.date.localeCompare(b.date));
+      ui.teamId=obj.teamId;ui.trainingId=obj.id;
+      return true;
+    });
+  };
+
+  // Wedstrijdformulier inclusief type, thuis/uit/neutraal en afgelast.
+  matchForm = function(m={}){
+    const plan=m.plan||{},ev=m.evaluation||{};
+    return `<div class="form-grid">
+      <div class="field"><label>Datum</label><input id="fMatchDate" class="input" type="date" value="${esc(m.date||TODAY())}"></div>
+      <div class="field"><label>Tijd</label><input id="fMatchTime" class="input" type="time" value="${esc(m.startTime||'')}"></div>
+      <div class="field"><label>Team</label><select id="fMatchTeam">${teamOptions(m.teamId||ui.teamId)}</select></div>
+      <div class="field"><label>Status</label><select id="fMatchStatus"><option value="Gepland" ${!cancelled217(m)?'selected':''}>Gepland</option><option value="Afgelast" ${cancelled217(m)?'selected':''}>Afgelast</option></select></div>
+      <div class="field"><label>Type wedstrijd</label><select id="fMatchType">${['Competitie','Beker','Oefen'].map(x=>`<option ${m.matchType===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="field"><label>Thuis/uit</label><select id="fMatchHome">${['Thuis','Uit','Neutraal'].map(x=>`<option ${m.homeAway===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="field full"><label>Tegenstander</label><input id="fOpponent" class="input" value="${esc(m.opponent||'')}"></div>
+      <div class="field"><label>Competitie/omschrijving</label><input id="fCompetition" class="input" placeholder="Bijv. O23 Divisie / districtsbeker" value="${esc(m.competition||'')}"></div>
+      <div class="field"><label>Locatie</label><input id="fVenue" class="input" value="${esc(m.venue||'')}"></div>
+      <div class="field"><label>Formatie</label><select id="fMatchFormation">${formationOptions(m.formation||activeTeam()?.formation||'4-3-3')}</select></div>
+      <div class="field full"><label>Teamdoel</label><textarea id="fPlanGoal">${esc(plan.teamGoal||'')}</textarea></div>
+      <div class="field full"><label>Pressingafspraken</label><textarea id="fPlanPress">${esc(plan.pressing||'')}</textarea></div>
+      <div class="field full"><label>Opbouwafspraken</label><textarea id="fPlanBuild">${esc(plan.buildUp||'')}</textarea></div>
+      <div class="field full"><label>Standaardsituaties</label><textarea id="fPlanSet">${esc(plan.setPieces||'')}</textarea></div>
+      <div class="field full"><label>Individuele opdrachten</label><textarea id="fPlanInd">${esc(plan.individual||'')}</textarea></div>
+      <div class="field full"><label>Algemene notities</label><textarea id="fMatchNotes">${esc(m.notes||'')}</textarea></div>
+      <div class="field full"><h3>Evaluatie</h3></div>
+      <div class="field full"><label>Wat ging goed?</label><textarea id="fEvalGood">${esc(ev.good||'')}</textarea></div>
+      <div class="field full"><label>Wat moet beter?</label><textarea id="fEvalImprove">${esc(ev.improve||'')}</textarea></div>
+      <div class="field full"><label>Wat moet terugkomen in de volgende training?</label><textarea id="fEvalNext">${esc(ev.nextTraining||'')}</textarea></div>
+    </div>`;
+  };
+
+  editMatch = function(id){
+    const m=id?matchById(id):null;
+    modal(m?'Wedstrijd bewerken':'Wedstrijd toevoegen',matchForm(m||{}),()=>{
+      const date=$('#fMatchDate').value;if(!date){toast('Kies een datum');return false}
+      const obj=m||{id:uid('m'),attendance:{},lineup:{},benchIds:[],squadPlayerIds:null,playerStats:{},checklist:{selection:false,lineup:false,opponent:false,setPieces:false,warmup:false,materials:false},manOfTheMatchPlayerId:null};
+      const status=$('#fMatchStatus').value;
+      Object.assign(obj,{
+        date,startTime:$('#fMatchTime').value,teamId:$('#fMatchTeam').value,status,cancelled:status==='Afgelast',
+        matchType:$('#fMatchType').value,homeAway:$('#fMatchHome').value,opponent:$('#fOpponent').value.trim(),
+        competition:$('#fCompetition').value.trim(),venue:$('#fVenue').value.trim(),formation:$('#fMatchFormation').value,
+        notes:$('#fMatchNotes').value.trim(),
+        plan:{teamGoal:$('#fPlanGoal').value.trim(),pressing:$('#fPlanPress').value.trim(),buildUp:$('#fPlanBuild').value.trim(),setPieces:$('#fPlanSet').value.trim(),individual:$('#fPlanInd').value.trim()},
+        evaluation:{good:$('#fEvalGood').value.trim(),improve:$('#fEvalImprove').value.trim(),nextTraining:$('#fEvalNext').value.trim()}
+      });
+      if(!m)state.matches.push(obj);
+      state.matches.sort((a,b)=>a.date.localeCompare(b.date));
+      ui.teamId=obj.teamId;ui.matchId=obj.id;
+      return true;
+    });
+  };
+
+  // Basisstatus niet meer handmatig invullen: die komt uit de opstelling.
+  editMatchStat = function(playerId){
+    const m=matchById(ui.matchId),p=playerById(playerId),s=m?.playerStats?.[playerId]||{};
+    if(!m||!p)return;
+    const role=matchRole217(m,playerId)||'Niet geselecteerd';
+    modal(`Wedstrijdstatistiek · ${p.name}`,`<div class="callout" style="margin-bottom:14px"><strong>Rol automatisch:</strong> ${esc(role)}<br><span class="muted small">Basis/bank wordt bepaald door de opstelling en hoeft niet opnieuw ingevuld te worden.</span></div><div class="form-grid">
+      <div class="field"><label>Minuten</label><input id="fMinutes" class="input" type="number" min="0" max="130" value="${number(s.minutes)}"></div>
+      <div class="field"><label>Goals</label><input id="fGoals" class="input" type="number" min="0" value="${number(s.goals)}"></div>
+      <div class="field"><label>Assists</label><input id="fAssists" class="input" type="number" min="0" value="${number(s.assists)}"></div>
+      <div class="field"><label>Geel</label><input id="fYellow" class="input" type="number" min="0" value="${number(s.yellow)}"></div>
+      <div class="field"><label>Rood</label><input id="fRed" class="input" type="number" min="0" value="${number(s.red)}"></div>
+    </div>`,()=>{
+      m.playerStats[playerId]={minutes:number($('#fMinutes').value),goals:number($('#fGoals').value),assists:number($('#fAssists').value),yellow:number($('#fYellow').value),red:number($('#fRed').value)};
+      return true;
+    });
+  };
+
+  function chooseMotm217(matchId){
+    const m=matchById(matchId);if(!m)return;
+    if(cancelled217(m)){toast('Een afgelaste wedstrijd heeft geen Man of the Match');return}
+    const participantIds=[...new Set([...Object.values(m.lineup||{}).filter(Boolean),...(m.benchIds||[])])];
+    const candidates=(participantIds.length?participantIds.map(playerById).filter(Boolean):eventSquad(m));
+    modal('Man of the Match',`<div class="field"><label>Speler</label><select id="fMotm" class="input"><option value="">Geen keuze</option>${candidates.map(p=>`<option value="${p.id}" ${m.manOfTheMatchPlayerId===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>`,()=>{
+      m.manOfTheMatchPlayerId=$('#fMotm').value||null;
+      return true;
+    },{saveText:'MOTM opslaan'});
+  }
+
+  const oldRenderTrainings217=renderTrainings;
+  renderTrainings=function(){
+    let html=oldRenderTrainings217();
+    const t=trainingById(ui.trainingId);
+    if(!t)return html;
+    const status=cancelled217(t);
+    html=html.replace(
+      `<button class="btn ghost" data-edit-training="${t.id}">Bewerken</button>`,
+      `<button class="btn ghost" data-edit-training="${t.id}">Bewerken</button><button class="btn ${status?'secondary':'ghost'}" data-toggle-cancel-training="${t.id}">${status?'Herstellen':'Afgelast'}</button><button class="btn danger" data-delete-training="${t.id}">Verwijderen</button>`
+    );
+    if(status){
+      html=`<div class="callout cancelled-callout"><strong>Training afgelast</strong><div class="muted small">Deze training blijft in de planning staan, maar telt niet mee voor aanwezigheid of trainingsstatistieken.</div></div>`+html;
+    }
+    return html;
+  };
+
+  // Wedstrijden: filters + thuis/uit-volgorde + MOTM + afgelast + verwijderen.
+  renderMatches=function(){
+    const team=activeTeam();
+    const all=state.matches.filter(m=>m.teamId===team.id).sort((a,b)=>b.date.localeCompare(a.date));
+    const filter=ui.matchTypeFilter||'Alles';
+    const list=all.filter(m=>filter==='Alles'||m.matchType===filter);
+    if(!ui.matchId||!matchById(ui.matchId)||matchById(ui.matchId).teamId!==team.id||!list.some(m=>m.id===ui.matchId)){
+      ui.matchId=(list.find(m=>m.date>=TODAY())||list[0])?.id||null;
+    }
+    const m=matchById(ui.matchId);
+    if(!m)return `<div class="toolbar"><div class="left"><select id="matchTypeFilter" class="input">${['Alles','Competitie','Beker','Oefen'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select></div><button class="btn primary" data-add-match>＋ Wedstrijd</button></div><div class="empty">Geen wedstrijden binnen dit filter.</div>`;
+
+    const squad=eventSquad(m);
+    const score=(m.goalsFor!==''||m.goalsAgainst!=='')?`${m.goalsFor||0} - ${m.goalsAgainst||0}`:'vs';
+    const isCancelled=cancelled217(m);
+    const homeTitle=m.homeAway==='Uit'
+      ? `${esc(m.opponent||'Tegenstander')} – ${esc(team.name)}`
+      : `${esc(team.name)} – ${esc(m.opponent||'Tegenstander')}`;
+    const motm=playerById(m.manOfTheMatchPlayerId);
+
+    return `<div class="toolbar match-toolbar"><div class="left">
+      <select id="matchTypeFilter" class="input">${['Alles','Competitie','Beker','Oefen'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select>
+      <select id="matchSelect" class="input">${list.map(x=>`<option value="${x.id}" ${x.id===m.id?'selected':''}>${fmtDate(x.date)} · ${esc(x.opponent||'Wedstrijd')}${cancelled217(x)?' · AFGELAST':''}</option>`).join('')}</select>
+      <button class="btn primary" data-add-match>＋ Wedstrijd</button></div>
+      <div class="right"><button class="btn ghost" data-edit-match="${m.id}">Wedstrijdplan</button><button class="btn ghost" data-edit-event-squad="${m.id}">Selectie ${squad.length}</button><button class="btn ${isCancelled?'secondary':'ghost'}" data-toggle-cancel-match="${m.id}">${isCancelled?'Herstellen':'Afgelast'}</button><button class="btn danger" data-delete-match="${m.id}">Verwijderen</button></div></div>
+      ${isCancelled?`<div class="callout cancelled-callout"><strong>Wedstrijd afgelast</strong><div class="muted small">Deze wedstrijd telt niet mee voor wedstrijden, basis/bank, minuten, resultaten, MOTM of andere statistieken.</div></div>`:''}
+      <div class="grid two match-page-grid"><section class="card match-main-card ${isCancelled?'cancelled-event':''}">
+        <div class="card-head"><div><p class="eyebrow">${esc(m.matchType||'Wedstrijd')} · ${esc(m.competition||'')}</p><h2>${homeTitle}</h2><p class="muted small">${fmtLong(m.date)} · ${esc(m.homeAway||'')} ${m.venue?'· '+esc(m.venue):''}</p></div><select id="matchFormation" class="formation-select" ${isCancelled?'disabled':''}>${formationOptions(m.formation)}</select></div>
+        <div class="match-score"><input id="matchGoalsFor" class="input score-input" inputmode="numeric" value="${esc(m.goalsFor)}" ${isCancelled?'disabled':''}><strong>${score==='vs'?'–':'-'}</strong><input id="matchGoalsAgainst" class="input score-input" inputmode="numeric" value="${esc(m.goalsAgainst)}" ${isCancelled?'disabled':''}><button class="btn ghost small-btn" data-save-score ${isCancelled?'disabled':''}>Score opslaan</button></div>
+        ${renderLineupBoard(m)}
+      </section>
+      <div class="grid">
+        <section class="card"><div class="card-head"><div><p class="eyebrow">MAN OF THE MATCH</p><h2>${motm?esc(motm.name):'Nog niet gekozen'}</h2></div><button class="btn ghost" data-choose-motm="${m.id}" ${isCancelled?'disabled':''}>${motm?'Wijzigen':'Kiezen'}</button></div>${motm?`<p class="muted small">Telt automatisch mee in de seizoensstatistieken.</p>`:''}</section>
+        <section class="card"><div class="card-head"><div><p class="eyebrow">VOORBEREIDING</p><h2>Wedstrijdchecklist</h2></div></div><div class="checklist">${Object.entries(CHECKLIST_LABELS).map(([k,l])=>`<label class="check-row"><input type="checkbox" data-match-check="${k}" ${m.checklist[k]?'checked':''} ${isCancelled?'disabled':''}> ${l}</label>`).join('')}</div></section>
+        <section class="card"><div class="card-head"><div><p class="eyebrow">WEDSTRIJDPLAN</p><h2>Afspraken</h2></div><button class="btn ghost small-btn" data-edit-match="${m.id}">Bewerk</button></div>${['teamGoal','pressing','buildUp','setPieces','individual'].map(k=>{const labels={teamGoal:'Teamdoel',pressing:'Pressing',buildUp:'Opbouw',setPieces:'Standaardsituaties',individual:'Individuele opdrachten'};return `<div class="list-row"><div><strong>${labels[k]}</strong><div class="muted small">${esc(m.plan[k]||'Nog niet ingevuld')}</div></div></div>`}).join('')}</section>
+        <section class="card"><div class="card-head"><div><p class="eyebrow">SPELERS</p><h2>Wedstrijdstatistieken</h2></div></div><div class="table-wrap"><table><thead><tr><th>Speler</th><th>Rol</th><th>Min</th><th>G</th><th>A</th><th></th></tr></thead><tbody>${squad.map(p=>{const s=m.playerStats[p.id]||{},role=matchRole217(m,p.id)||'–';return `<tr><td>${esc(p.name)}</td><td>${esc(role)}</td><td>${number(s.minutes)}</td><td>${number(s.goals)}</td><td>${number(s.assists)}</td><td><button class="btn ghost small-btn" data-edit-match-stat="${p.id}" ${isCancelled?'disabled':''}>Bewerk</button></td></tr>`}).join('')}</tbody></table></div></section>
+      </div></div>
+      <section class="card" style="margin-top:16px"><div class="card-head"><div><p class="eyebrow">NA DE WEDSTRIJD</p><h2>Evaluatie → volgende training</h2></div><button class="btn ghost" data-edit-match="${m.id}">Evaluatie bewerken</button></div><div class="grid three"><div class="callout"><strong>Goed</strong><p class="small">${nl2br(m.evaluation.good||'Nog niet ingevuld')}</p></div><div class="callout orange"><strong>Verbeteren</strong><p class="small">${nl2br(m.evaluation.improve||'Nog niet ingevuld')}</p></div><div class="callout"><strong>Volgende training</strong><p class="small">${nl2br(m.evaluation.nextTraining||'Nog niet ingevuld')}</p>${m.evaluation.nextTraining&&!isCancelled?`<button class="btn secondary small-btn" data-training-from-match="${m.id}">Maak trainingsfocus</button>`:''}</div></div></section>`;
+  };
+
+  // Afgelaste activiteit kan wel geopend worden, maar aanwezigheid kan niet worden ingevuld.
+  renderAttendance=function(){
+    const team=activeTeam();
+    const events=[...state.trainings.filter(x=>x.teamId===team.id).map(x=>({...x,_type:'Training'})),...state.matches.filter(x=>x.teamId===team.id).map(x=>({...x,_type:'Wedstrijd'}))].sort((a,b)=>b.date.localeCompare(a.date));
+    if(!ui.attendanceId||!eventById(ui.attendanceId)||eventById(ui.attendanceId).teamId!==team.id)ui.attendanceId=(events.find(e=>e.date===TODAY())||events[0])?.id||null;
+    const ev=eventById(ui.attendanceId);
+    if(!ev)return `<div class="empty">Nog geen trainingen of wedstrijden voor ${esc(team.name)}.</div>`;
+    if(cancelled217(ev)){
+      return `<div class="toolbar"><div class="left"><select id="attendanceEvent" class="input">${events.map(e=>`<option value="${e.id}" ${e.id===ev.id?'selected':''}>${fmtDate(e.date)} · ${e._type}${e._type==='Wedstrijd'&&e.opponent?' · '+esc(e.opponent):''}${cancelled217(e)?' · AFGELAST':''}</option>`).join('')}</select></div></div>
+      <section class="card"><div class="card-head"><div><p class="eyebrow">AFGELAST</p><h2>${fmtLong(ev.date)}</h2><p class="muted small">${esc(team.name)}</p></div><span class="badge red">Telt niet mee</span></div><div class="callout cancelled-callout">Voor deze afgelaste activiteit wordt geen aanwezigheid geregistreerd. De dag wordt volledig genegeerd in aanwezigheidspercentages.</div></section>`;
+    }
+    const squad=eventSquad(ev),c=eventAttendanceCounts(ev);
+    return `<div class="toolbar"><div class="left"><select id="attendanceEvent" class="input">${events.map(e=>`<option value="${e.id}" ${e.id===ev.id?'selected':''}>${fmtDate(e.date)} · ${e._type}${e._type==='Wedstrijd'&&e.opponent?' · '+esc(e.opponent):''}${cancelled217(e)?' · AFGELAST':''}</option>`).join('')}</select></div><div class="right"><button class="btn ghost" data-edit-event-squad="${ev.id}">Groep aanpassen</button><button class="btn secondary" data-all-present>Iedereen aanwezig</button><button class="btn ghost" data-clear-attendance>Leegmaken</button></div></div>
+    <section class="card"><div class="card-head"><div><p class="eyebrow">${eventType(ev).toUpperCase()}</p><h2>${fmtLong(ev.date)}</h2><p class="muted small">${esc(team.name)} · groep ${squad.length} spelers</p></div>${ev.focus?`<span class="chip green">${esc(ev.focus)}</span>`:''}</div><div class="attendance-summary"><div class="summary-box"><span class="small muted">Aanwezig</span><strong class="success-text">${c.present}</strong></div><div class="summary-box"><span class="small muted">Afwezig</span><strong>${c.absent}</strong></div><div class="summary-box"><span class="small muted">Onbekend</span><strong>${c.unknown}</strong></div><div class="summary-box"><span class="small muted">Ingevuld</span><strong>${c.filled}/${c.total}</strong></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Speler</th><th>Positie</th><th>Status</th></tr></thead><tbody>${squad.map(p=>{const s=ev.attendance?.[p.id]||'';return `<tr class="${presentStatus(s)?'status-present':absentStatus(s)?'status-absent':''}"><td class="player-name">${esc(p.name)}</td><td>${esc(p.position||'–')}</td><td><select class="attendance-select" data-attendance-player="${p.id}">${attendanceOptions(s)}</select></td></tr>`}).join('')}</tbody></table></div></section>`;
+  };
+
+  const oldRenderProfile217=renderPlayerProfilePage;
+  renderPlayerProfilePage=function(){
+    let html=oldRenderProfile217();
+    const p=playerById(ui.playerId);if(!p)return html;
+    const hist=playerMatchHistory217(p.id);
+    const totals=matchTotals(p.id,null);
+    html=html.replace(/<div class="card player-stat-card"><span>Wedstrijden<\/span><strong>.*?<\/strong><small>.*?<\/small><\/div>/,
+      `<div class="card player-stat-card"><span>Wedstrijden</span><strong>${totals.games}</strong><small>${totals.starts} basis · ${totals.bench} bank</small></div>`);
+    const rows=hist.map(({m,role})=>{
+      const own=teamName(m.teamId);
+      const fixture=m.homeAway==='Uit'?`${esc(m.opponent||'Tegenstander')} – ${esc(own)}`:`${esc(own)} – ${esc(m.opponent||'Tegenstander')}`;
+      const score=(m.goalsFor!==''||m.goalsAgainst!=='')?(m.homeAway==='Uit'?`${esc(m.goalsAgainst||0)}–${esc(m.goalsFor||0)}`:`${esc(m.goalsFor||0)}–${esc(m.goalsAgainst||0)}`):'–';
+      const s=m.playerStats?.[p.id]||{};
+      return `<tr><td>${fmtDate(m.date)}</td><td>${esc(own)}</td><td><strong>${fixture}</strong><div class="muted tiny">${esc(m.matchType||'Wedstrijd')} ${m.competition?'· '+esc(m.competition):''}</div></td><td><span class="badge ${role==='Basis'?'green':role==='Bank'?'blue':''}">${esc(role)}</span></td><td>${score}</td><td>${number(s.minutes)||'–'}</td><td>${number(s.goals)||0}</td><td>${number(s.assists)||0}</td>${m.manOfTheMatchPlayerId===p.id?'<td>⭐</td>':'<td>–</td>'}</tr>`;
+    }).join('');
+    return html+`<section class="card player-match-history" style="margin-top:16px"><div class="card-head"><div><p class="eyebrow">WEDSTRIJDLOGBOEK</p><h2>Gespeelde wedstrijden</h2><p class="muted small">Automatisch uit basisopstelling en bank. Afgelaste wedstrijden worden niet opgenomen.</p></div><span class="badge green">${totals.games} wedstrijd${totals.games===1?'':'en'}</span></div>${hist.length?`<div class="table-wrap"><table><thead><tr><th>Datum</th><th>Team</th><th>Wedstrijd</th><th>Rol</th><th>Uitslag</th><th>Min</th><th>G</th><th>A</th><th>MOTM</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">Nog geen gespeelde wedstrijden.</div>'}</section>`;
+  };
+
+  renderStats=function(){
+    const team=activeTeam();
+    const players=[...new Map([...playersForTeam(team.id),...availablePlayersForTeam(team.id)].map(p=>[p.id,p])).values()];
+    const data=players.map(p=>({p,pct:attendancePct(p.id,team.id),m:matchTotals(p.id,team.id)}));
+    const avgVals=data.filter(x=>x.pct!==null).map(x=>x.pct);
+    const avg=avgVals.length?Math.round(avgVals.reduce((a,b)=>a+b,0)/avgVals.length):0;
+    const played=state.matches.filter(m=>m.teamId===team.id&&!cancelled217(m)&&matchPlayed217(m));
+    const scored=played.filter(m=>m.goalsFor!==''&&m.goalsAgainst!=='');
+    const gf=scored.reduce((a,m)=>a+number(m.goalsFor),0),ga=scored.reduce((a,m)=>a+number(m.goalsAgainst),0);
+    const types=['Competitie','Beker','Oefen'].map(type=>({type,n:played.filter(m=>m.matchType===type).length}));
+    return `<div class="grid kpis">
+      <div class="card kpi"><span>Gem. trainingsopkomst</span><strong>${avgVals.length?avg+'%':'–'}</strong><span>Afgelast uitgesloten</span></div>
+      <div class="card kpi"><span>Gespeelde wedstrijden</span><strong>${played.length}</strong><span>${types.map(x=>`${x.type} ${x.n}`).join(' · ')}</span></div>
+      <div class="card kpi"><span>Doelsaldo</span><strong>${scored.length?(gf-ga>0?'+':'')+(gf-ga):'–'}</strong><span>${gf} voor · ${ga} tegen</span></div>
+      <div class="card kpi"><span>Man of the Match</span><strong>${played.filter(m=>m.manOfTheMatchPlayerId).length}</strong><span>toegewezen</span></div>
+    </div>
+    <div class="stats-grid">
+      <section class="card"><div class="card-head"><div><p class="eyebrow">AANWEZIGHEID</p><h2>Trainingsopkomst</h2></div></div><div class="bar-list">${data.filter(x=>x.p.primaryTeamId===team.id).map(x=>`<div class="bar-row"><button class="link-button" data-profile-player="${x.p.id}">${esc(x.p.name)}</button><div class="bar-track"><div class="bar-fill" style="width:${x.pct||0}%"></div></div><strong>${x.pct===null?'–':x.pct+'%'}</strong></div>`).join('')}</div></section>
+      <section class="card"><div class="card-head"><div><p class="eyebrow">WEDSTRIJD</p><h2>Spelerstatistieken</h2></div></div><div class="table-wrap"><table><thead><tr><th>Speler</th><th>W</th><th>Basis</th><th>Bank</th><th>Min</th><th>G</th><th>A</th><th>MOTM</th></tr></thead><tbody>${data.sort((a,b)=>b.m.games-a.m.games||b.m.minutes-a.m.minutes).map(x=>`<tr><td><button class="link-button" data-profile-player="${x.p.id}">${esc(x.p.name)}</button></td><td>${x.m.games}</td><td>${x.m.starts}</td><td>${x.m.bench}</td><td>${x.m.minutes}</td><td>${x.m.goals}</td><td>${x.m.assists}</td><td>${x.m.motm}</td></tr>`).join('')}</tbody></table></div></section>
+    </div>`;
+  };
+
+  // Extra click-acties.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+
+    if(b.dataset.deleteTraining){
+      const t=trainingById(b.dataset.deleteTraining);if(!t)return;
+      if(confirm(`Training van ${fmtDate(t.date)} verwijderen?\n\nAanwezigheid en trainingsplan van deze training worden ook verwijderd.`)){
+        state.trainings=state.trainings.filter(x=>x.id!==t.id);
+        if(ui.trainingId===t.id)ui.trainingId=null;
+        if(ui.attendanceId===t.id)ui.attendanceId=null;
+        save();toast('Training verwijderd');
+      }
+      return;
+    }
+    if(b.dataset.deleteMatch){
+      const m=matchById(b.dataset.deleteMatch);if(!m)return;
+      if(confirm(`Wedstrijd tegen ${m.opponent||'tegenstander'} verwijderen?\n\nOpstelling, bank, statistieken en MOTM van deze wedstrijd worden ook verwijderd.`)){
+        state.matches=state.matches.filter(x=>x.id!==m.id);
+        if(ui.matchId===m.id)ui.matchId=null;
+        if(ui.attendanceId===m.id)ui.attendanceId=null;
+        save();toast('Wedstrijd verwijderd');
+      }
+      return;
+    }
+    if(b.dataset.toggleCancelTraining){
+      const t=trainingById(b.dataset.toggleCancelTraining);if(!t)return;
+      t.cancelled=!cancelled217(t);t.status=t.cancelled?'Afgelast':'Gepland';
+      save();toast(t.cancelled?'Training afgelast':'Training hersteld');
+      return;
+    }
+    if(b.dataset.toggleCancelMatch){
+      const m=matchById(b.dataset.toggleCancelMatch);if(!m)return;
+      m.cancelled=!cancelled217(m);m.status=m.cancelled?'Afgelast':'Gepland';
+      save();toast(m.cancelled?'Wedstrijd afgelast':'Wedstrijd hersteld');
+      return;
+    }
+    if(b.dataset.chooseMotm){
+      chooseMotm217(b.dataset.chooseMotm);return;
+    }
+  });
+
+  // Extra bindings voor het wedstrijdfilter.
+  const oldBindPage217=bindPage;
+  bindPage=function(){
+    oldBindPage217();
+    const f=$('#matchTypeFilter');
+    if(f)f.onchange=e=>{ui.matchTypeFilter=e.target.value;ui.matchId=null;renderPage()};
+  };
+
+  normalize();
+  save({render:false,sync:false});
+  renderPage();
+})();
