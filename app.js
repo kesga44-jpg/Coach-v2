@@ -103,7 +103,7 @@ function pageInfo(){
   return map[ui.page]||map.dashboard;
 }
 function renderTeamSelect(){const s=$('#globalTeamSelect');if(!s)return;s.innerHTML=teamOptions(ui.teamId);s.value=ui.teamId;s.onchange=()=>{ui.teamId=s.value;ui.attendanceId=null;ui.trainingId=null;ui.matchId=null;renderPage()};$('#brandTeam').textContent=activeTeam()?.name||state.team.name||'Football Coach'}
-function renderPage(){normalize();const [title,eye]=pageInfo();$('#pageTitle').textContent=title;$('#pageEyebrow').textContent=(state.team.season?`SEIZOEN ${state.team.season} · `:'')+eye;renderTeamSelect();const fn={dashboard:renderDashboard,players:renderPlayers,player:renderPlayerProfilePage,attendance:renderAttendance,trainings:renderTrainings,exercises:renderExercises,matches:renderMatches,tactics:renderTactics,season:renderSeason,stats:renderStats,notes:renderNotes,documents:renderDocuments,assistant:renderAssistant,settings:renderSettings,more:renderMore}[ui.page]||renderDashboard;$('#app').innerHTML=fn();bindPage()}
+function renderPage(){normalize();document.body.dataset.page=ui.page;const [title,eye]=pageInfo();$('#pageTitle').textContent=title;$('#pageEyebrow').textContent=(state.team.season?`SEIZOEN ${state.team.season} · `:'')+eye;renderTeamSelect();const fn={dashboard:renderDashboard,players:renderPlayers,player:renderPlayerProfilePage,attendance:renderAttendance,trainings:renderTrainings,exercises:renderExercises,matches:renderMatches,tactics:renderTactics,season:renderSeason,stats:renderStats,notes:renderNotes,documents:renderDocuments,assistant:renderAssistant,settings:renderSettings,more:renderMore}[ui.page]||renderDashboard;$('#app').innerHTML=fn();bindPage()}
 function scheduleRow(e){const d=new Date(e.date+'T12:00:00');return `<div class="schedule-row"><div class="date-box"><strong>${d.getDate()}</strong><span>${d.toLocaleDateString('nl-NL',{month:'short'})}</span></div><div><strong>${esc(e.type==='Wedstrijd'?(e.opponent?`vs ${e.opponent}`:'Wedstrijd'):(e.title||'Training'))}</strong><div class="event-meta"><span class="muted small">${fmtDate(e.date)} ${esc(e.startTime||'')}</span>${e.focus?`<span class="chip">${esc(e.focus)}</span>`:''}</div></div><span class="badge ${e.type==='Training'?'green':'blue'}">${esc(e.type)}</span></div>`}
 
 function renderDashboard(){
@@ -181,29 +181,32 @@ function renderPlayerProfilePage(){
   const teamId=p.primaryTeamId||ui.teamId;
   const pct=attendancePct(p.id,teamId);
   const mt=matchTotals(p.id,teamId);
+  const bench=Math.max(0,mt.games-mt.starts);
+  const motm=state.matches.filter(m=>m.teamId===teamId && !(m.cancelled||m.status==='Afgelast') && m.manOfTheMatchPlayerId===p.id).length;
   const teams=(p.teamIds||[]).map(teamName).filter(Boolean);
   const notes=state.coachNotes.filter(n=>n.playerId===p.id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,8);
   const scoreBoxes=Object.entries(SCORE_LABELS).map(([key,label])=>`<div class="player-development-score"><span>${label}</span><strong>${number(p.scores?.[key])||'–'}</strong><small>/ 5</small></div>`).join('');
   return `
     <div class="player-profile-actions">
-      <button class="btn ghost" data-go="players">← Team</button>
+      <button class="btn ghost player-back-btn" data-go="players">← <span>Team</span></button>
       <div class="row-actions">
-        <button class="btn danger" data-archive-player="${p.id}">Uit selectie</button>
-        <button class="btn primary" data-edit-player="${p.id}">✎ Bewerken</button>
+        <button class="btn primary player-edit-btn" data-edit-player="${p.id}">✎ <span>Bewerken</span></button>
+        <button class="btn danger player-archive-btn" data-archive-player="${p.id}">Uit selectie</button>
       </div>
     </div>
     <div class="player-profile-layout">
       <aside class="card player-profile-summary">
-        <div class="player-profile-avatar">${initials(p.name)}</div>
-        <div class="player-profile-name">
-          <p class="eyebrow">SPELER</p>
-          <h2>${esc(p.name)}</h2>
-          <p class="muted">${esc(p.position||'Positie niet ingevuld')}</p>
-        </div>
-        <div class="chips player-profile-tags">
-          <span class="badge green">${esc(teamName(p.primaryTeamId))}</span>
-          ${p.number?`<span class="badge">#${esc(p.number)}</span>`:''}
-          <span class="badge ${p.selection==='Definitief'?'green':p.selection==='Twijfel'?'orange':''}">${esc(p.selection||'Overig')}</span>
+        <div class="player-profile-identity">
+          <div class="player-profile-avatar">${initials(p.name)}</div>
+          <div class="player-profile-name">
+            <h2>${esc(p.name)}</h2>
+            <p class="muted">${esc(p.position||'Positie niet ingevuld')}</p>
+            <div class="chips player-profile-tags">
+              <span class="badge green">${esc(teamName(p.primaryTeamId))}</span>
+              ${p.number?`<span class="badge">#${esc(p.number)}</span>`:''}
+              <span class="badge ${p.selection==='Definitief'?'green':p.selection==='Twijfel'?'orange':''}">${esc(p.selection||'Overig')}</span>
+            </div>
+          </div>
         </div>
         <div class="player-info-list">
           <div><span>Positie</span><strong>${esc(p.position||'–')}</strong></div>
@@ -214,11 +217,13 @@ function renderPlayerProfilePage(){
         </div>
       </aside>
       <main class="player-profile-main">
-        <div class="player-profile-stats">
+        <div class="player-profile-stats player-profile-stats-six">
           <div class="card player-stat-card"><span>Opkomst</span><strong>${pct===null?'–':pct+'%'}</strong><small>Trainingen</small></div>
-          <div class="card player-stat-card"><span>Wedstrijden</span><strong>${mt.games}</strong><small>${mt.starts} basis</small></div>
-          <div class="card player-stat-card"><span>Minuten</span><strong>${mt.minutes}</strong><small>Wedstrijdminuten</small></div>
-          <div class="card player-stat-card"><span>Goals / assists</span><strong>${mt.goals} / ${mt.assists}</strong><small>Dit seizoen</small></div>
+          <div class="card player-stat-card"><span>Wedstrijden</span><strong>${mt.games}</strong><small>${mt.starts} basis · ${bench} bank</small></div>
+          <div class="card player-stat-card"><span>Minuten</span><strong>${mt.minutes}</strong><small>Dit seizoen</small></div>
+          <div class="card player-stat-card"><span>Doelpunten</span><strong>${mt.goals}</strong><small>Dit seizoen</small></div>
+          <div class="card player-stat-card"><span>Assists</span><strong>${mt.assists}</strong><small>Dit seizoen</small></div>
+          <div class="card player-stat-card motm-stat"><span>Man of the Match</span><strong>${motm}</strong><small>Dit seizoen</small></div>
         </div>
         <section class="card">
           <div class="card-head"><div><p class="eyebrow">ONTWIKKELING</p><h2>Spelersontwikkeling</h2></div></div>
@@ -239,7 +244,6 @@ function renderPlayerProfilePage(){
       </main>
     </div>`;
 }
-
 function renderAttendance(){
   const team=activeTeam();const events=[...state.trainings.filter(x=>x.teamId===team.id).map(x=>({...x,_type:'Training'})),...state.matches.filter(x=>x.teamId===team.id).map(x=>({...x,_type:'Wedstrijd'}))].sort((a,b)=>b.date.localeCompare(a.date));
   if(!ui.attendanceId||!eventById(ui.attendanceId)||eventById(ui.attendanceId).teamId!==team.id)ui.attendanceId=(events.find(e=>e.date===TODAY())||events[0])?.id||null;

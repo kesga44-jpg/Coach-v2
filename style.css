@@ -217,3 +217,100 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   .match-toolbar #matchSelect{font-size:12px}
   .match-toolbar .right .btn{font-size:12px}
 }
+
+
+/* =========================================
+   v2.1.9 · spelersprofiel + MOTM + mobiel
+   ========================================= */
+.player-profile-identity{display:flex;align-items:flex-start;gap:16px}
+.player-profile-identity .player-profile-avatar{flex:0 0 auto;margin:0}
+.player-profile-identity .player-profile-tags{margin-top:12px}
+.player-profile-stats-six{grid-template-columns:repeat(3,minmax(0,1fr))}
+.motm-stat{background:linear-gradient(145deg,#fff,#fff5d8);border-color:#f1dfab}
+.player-back-btn,.player-edit-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+
+@media(max-width:1100px){
+  .player-profile-stats-six{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+@media(max-width:820px){
+  body[data-page="player"] .topbar{
+    position:relative;
+    top:auto;
+    min-height:auto;
+  }
+  body[data-page="player"] .content{
+    padding-top:12px!important;
+  }
+  body[data-page="player"] #quickAdd{display:none}
+  .player-profile-layout{display:flex;flex-direction:column;gap:14px}
+  .player-profile-summary{order:1;position:static!important;display:block!important;width:100%}
+  .player-profile-main{order:2;width:100%}
+  .player-profile-identity{display:grid;grid-template-columns:86px minmax(0,1fr);gap:16px;align-items:center}
+  .player-profile-avatar{width:82px!important;height:82px!important;border-radius:24px!important;font-size:27px!important}
+  .player-profile-name h2{font-size:23px!important;line-height:1.08;margin:0 0 4px!important}
+  .player-profile-name p{font-size:14px;margin:0}
+  .player-profile-tags{grid-column:auto!important;margin-top:11px!important}
+  .player-info-list{grid-column:auto!important;margin-top:20px!important}
+  .player-profile-stats-six{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+@media(max-width:560px){
+  body[data-page="player"] .topbar{
+    padding:calc(10px + env(safe-area-inset-top)) 14px 12px!important;
+    border-bottom:1px solid var(--line);
+  }
+  body[data-page="player"] .topbar>div:first-child{max-width:100%!important}
+  body[data-page="player"] .topbar .eyebrow{
+    font-size:9px!important;
+    letter-spacing:1.25px!important;
+    white-space:normal!important;
+    overflow-wrap:normal!important;
+    line-height:1.2!important;
+  }
+  body[data-page="player"] .topbar h1{
+    font-size:27px!important;
+    line-height:1.02!important;
+    letter-spacing:-.8px!important;
+    overflow-wrap:normal!important;
+    word-break:normal!important;
+  }
+  body[data-page="player"] .content{
+    padding:12px 14px 112px!important;
+  }
+  .player-profile-actions{
+    position:static!important;
+    top:auto!important;
+    z-index:auto!important;
+    background:transparent!important;
+    backdrop-filter:none!important;
+    padding:0!important;
+    margin:0 0 12px!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:9px!important;
+  }
+  .player-profile-actions>.btn,
+  .player-profile-actions>.row-actions{width:100%!important;min-width:0}
+  .player-profile-actions>.row-actions{display:flex!important;gap:0!important}
+  .player-profile-actions .player-edit-btn{width:100%!important;min-height:48px;font-size:15px;border-radius:15px}
+  .player-profile-actions .player-back-btn{min-height:48px;font-size:15px;border-radius:15px}
+  .player-profile-actions .player-archive-btn{display:none}
+  .player-profile-summary{padding:16px!important;border-radius:18px!important}
+  .player-profile-identity{grid-template-columns:72px minmax(0,1fr);gap:13px}
+  .player-profile-avatar{width:68px!important;height:68px!important;border-radius:20px!important;font-size:22px!important}
+  .player-profile-name h2{font-size:20px!important}
+  .player-profile-name p{font-size:13px}
+  .player-profile-tags{gap:6px!important}
+  .player-profile-tags .badge{font-size:10px;padding:5px 8px}
+  .player-info-list>div{padding:10px 0!important;align-items:center!important}
+  .player-info-list span{font-size:11px!important}
+  .player-info-list strong{font-size:12px!important;max-width:62%!important}
+  .player-profile-stats-six{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .player-stat-card{min-height:112px!important;padding:14px!important;border-radius:16px!important}
+  .player-stat-card>span{font-size:11px!important}
+  .player-stat-card strong{font-size:28px!important;margin:auto 0 5px!important}
+  .player-stat-card small{font-size:11px;line-height:1.25}
+  .motm-stat{background:linear-gradient(145deg,#fff,#fff0c9)!important}
+  .player-match-history{margin-top:14px!important}
+}
