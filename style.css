@@ -173,3 +173,47 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   .bottom-nav{display:none!important}
 }
 .player-match-history table{min-width:760px}
+
+
+/* =========================================
+   v2.1.8 · wedstrijden mobiel
+   ========================================= */
+
+@media(max-width:860px){
+  .topbar{
+    padding-top:calc(14px + env(safe-area-inset-top));
+    min-height:calc(78px + env(safe-area-inset-top));
+  }
+  .match-toolbar{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:10px;
+    align-items:stretch;
+  }
+  .match-toolbar .left,.match-toolbar .right{min-width:0;width:100%}
+}
+
+@media(max-width:560px){
+  .content{padding-top:12px}
+  .match-toolbar{gap:9px;margin-bottom:12px}
+  .match-toolbar .left{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;width:100%}
+  .match-toolbar #matchTypeFilter{grid-column:1;grid-row:1;width:92px;min-width:0;padding-left:10px;padding-right:24px}
+  .match-toolbar #matchSelect{grid-column:2;grid-row:1;width:100%;min-width:0}
+  .match-toolbar .left [data-add-match]{grid-column:1/-1;grid-row:2;min-height:46px;width:100%;white-space:nowrap;justify-content:center}
+  .match-toolbar .right{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .match-toolbar .right .btn{min-height:44px;width:100%;min-width:0;padding:10px 8px;line-height:1.15;white-space:normal;text-align:center;justify-content:center}
+  .match-main-card{margin-top:2px}
+  .match-main-card>.card-head{grid-template-columns:minmax(0,1fr) 92px;align-items:start}
+  .match-main-card>.card-head h2{font-size:19px;line-height:1.12}
+  .match-main-card>.card-head .eyebrow{font-size:9px;letter-spacing:1.2px}
+  .match-main-card>.card-head .muted{font-size:12px}
+  .formation-select{width:92px;min-width:92px;max-width:92px}
+  .cancelled-callout{margin-bottom:12px}
+}
+
+@media(max-width:390px){
+  .match-toolbar .left{grid-template-columns:82px minmax(0,1fr)}
+  .match-toolbar #matchTypeFilter{width:82px;font-size:12px}
+  .match-toolbar #matchSelect{font-size:12px}
+  .match-toolbar .right .btn{font-size:12px}
+}

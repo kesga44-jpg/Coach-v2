@@ -1,4 +1,17 @@
-# Football Coach v2.1.7
+# Football Coach v2.1.8
+
+Update op de bestaande v2.1.7.
+
+## Nieuw in v2.1.8
+
+- Wedstrijdchecklist/afvinklijst verwijderd uit het wedstrijdscherm.
+- Mobiele bovenkant van **Wedstrijden** opnieuw ingedeeld.
+- Filter en wedstrijdkeuze staan stabiel naast elkaar.
+- **＋ Wedstrijd** krijgt op mobiel een eigen volle rij en breekt niet meer af.
+- Wedstrijdplan / Selectie / Afgelast-Herstellen / Verwijderen staan in een vaste 2-koloms actiegrid.
+- Extra iPhone safe-area ruimte bovenaan zodat seizoenregel en paginatitel niet tegen de statusbalk komen.
+- Bestaande functies uit v2.1.7 blijven behouden: bankkeuze, MOTM, wedstrijdfilters, verwijderen, afgelast-logica en statistieken.
+
 
 Clean repository-versie gebaseerd op v2.1.6.
 
