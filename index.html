@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b5d3b">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Coach O23">
   <title>Football Coach</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.2.5">
+  <link rel="stylesheet" href="style.css?v=2.7.1">
 </head>
 <body>
   <div class="app-shell">
@@ -31,6 +31,7 @@
         <button class="nav-item" data-page="season">▣ <span>Seizoen</span></button>
         <button class="nav-item" data-page="stats">▥ <span>Statistieken</span></button>
         <button class="nav-item" data-page="notes">✎ <span>Coachnotities</span></button>
+        <button class="nav-item" data-page="knowledge">▤ <span>Kennisbank</span></button>
         <button class="nav-item" data-page="documents">⌁ <span>Bronnen</span></button>
         <button class="nav-item" data-page="assistant">✦ <span>Coachassistent</span></button>
         <button class="nav-item" data-page="settings">⚙ <span>Instellingen</span></button>
@@ -41,7 +42,7 @@
     <main class="main-area">
       <header class="topbar">
         <div><p class="eyebrow" id="pageEyebrow">SEIZOEN 2026/2027</p><h1 id="pageTitle">Vandaag</h1></div>
-        <div class="top-actions"><select id="globalTeamSelect" class="team-select" aria-label="Actief team"></select><button class="icon-btn" id="quickAdd" title="Snel toevoegen">＋</button></div>
+        <div class="top-actions"><span id="connectionState" class="connection-state online">● Online</span><button class="icon-btn" data-global-search title="Zoeken">⌕</button><button class="icon-btn" id="undoAction" data-undo-action title="Ongedaan maken" disabled>↶</button><select id="globalTeamSelect" class="team-select" aria-label="Actief team"></select><button class="icon-btn" id="quickAdd" title="Snel toevoegen">＋</button></div>
       </header>
       <section id="app" class="content"></section>
     </main>
@@ -63,12 +64,14 @@
     </form>
   </dialog>
   <input id="importFile" type="file" accept="application/json,.json" hidden>
+  <input id="knowledgeFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+  <input id="knowledgeFileBulk" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple hidden>
   <input id="docFile" type="file" accept=".pdf,.docx,.xlsx,.xlsm,.xls,.txt,.md,.csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
   <div id="toast" class="toast" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.2/mammoth.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-  <script src="app.js?v=2.2.5"></script>
+  <script src="app.js?v=2.7.1"></script>
 </body>
 </html>
