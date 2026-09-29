@@ -1,51 +1,41 @@
-# Football Coach v2.1.9
+# Football Coach V3 — Full Speed O23
 
-Update op de bestaande v2.1.7.
+## Wat deze versie toevoegt
+- Wedstrijddag in 5 stappen: plan, live, speelminuten, tegenstanderdossier, evaluatie.
+- Live gebeurtenissen en coachnotities.
+- Speelminuten, basis/inval, positie, goals, assists en wedstrijd-RPE.
+- Spelerontwikkeling met doelen, acties, criteria en meetmomenten door de tijd.
+- Trainingsmonitoring: aanwezigheid, sessie-RPE × minuten, pijn, spierpijn, vermoeidheid en motivatie.
+- 7-daagse geregistreerde belasting als coachsignaal (geen blessurevoorspelling).
+- Training → hoofdthema → evaluatie → volgende stap.
+- O23-methodiek rechtstreeks in dashboard, trainingen, tactiek en seizoen.
+- Tegenstanderdossier met formatie, opbouw, pressing, sterktes/zwaktes en standaardsituaties.
+- Lokale coachassistent op basis van eigen data en vaste O23-regels.
+- JSON back-up/import en behoud van `footballCoachDataV2`.
 
-## Nieuw in v2.1.8
+## Documentatielogica
+Deze build volgt de aangeleverde O23-documentatie:
+- dinsdag ontwikkelen;
+- donderdag aanscherpen / hogere beslisdruk;
+- zaterdag toetsen;
+- maximaal één hoofdprobleem per ontwikkelweek;
+- vaste coachtaal: centrum dicht, naar buiten, aansluiten, doorstappen, rugdekking, vijf seconden;
+- welzijn vóór de sessie en sessie-RPE × minuten erna;
+- minutenbanden groen 75–90, oranje 45–60, rood individueel/aangepast;
+- wedstrijdobservaties terugvoeren naar de volgende training.
 
-- Wedstrijdchecklist/afvinklijst verwijderd uit het wedstrijdscherm.
-- Mobiele bovenkant van **Wedstrijden** opnieuw ingedeeld.
-- Filter en wedstrijdkeuze staan stabiel naast elkaar.
-- **＋ Wedstrijd** krijgt op mobiel een eigen volle rij en breekt niet meer af.
-- Wedstrijdplan / Selectie / Afgelast-Herstellen / Verwijderen staan in een vaste 2-koloms actiegrid.
-- Extra iPhone safe-area ruimte bovenaan zodat seizoenregel en paginatitel niet tegen de statusbalk komen.
-- Bestaande functies uit v2.1.7 blijven behouden: bankkeuze, MOTM, wedstrijdfilters, verwijderen, afgelast-logica en statistieken.
+## Updaten zonder data kwijt te raken
+1. Maak in je huidige app eerst een JSON-back-up.
+2. Vervang op GitHub de oude `index.html`, `app.js`, `style.css`, `manifest.json` en `sw.js` door deze bestanden.
+3. Laat de GitHub Pages URL/repository gelijk. De browser gebruikt dezelfde localStorage-key: `footballCoachDataV2`.
+4. Open de app en controleer spelers, aanwezigheid en wedstrijden.
+5. Importeer de JSON-back-up alleen als gegevens niet automatisch zichtbaar zijn.
+6. Op iPhone kan een oude service-worker-cache blijven hangen. Sluit de PWA volledig en open opnieuw; indien nodig verwijder de beginscherm-app en voeg dezelfde URL opnieuw toe.
 
+## PDF / iPhone / Boeken
+Gebruik in een wedstrijd `Evaluatie` → `Print / PDF / Boeken`. Op iPhone/iPad: Deel/Print, open de afdrukpreview groot en kies opnieuw Deel. Daarna kun je bewaren in Bestanden of naar Boeken sturen. De print-CSS is compact en probeert kaarten niet over pagina's te breken.
 
-Clean repository-versie gebaseerd op v2.1.6.
-
-## Nieuw in v2.1.7
-
-- Mobiel: vaste ondernavigatie.
-- iPad portrait: compacte donkere navigatierail.
-- iPad landscape: compacte zijbalk met labels.
-- Laptop/desktop: volledige zijbalk.
-- Trainingen gebruiken alleen spelers met dat team als voorkeursteam.
-- Wedstrijden gebruiken alle spelers die voor dat team beschikbaar staan.
-- Basisopstelling en bank registreren automatisch een gespeelde wedstrijd.
-- Spelersprofielen tonen automatisch wedstrijdhistorie met team, tegenstander, Basis/Bank, uitslag, minuten, goals, assists en MOTM.
-- Man of the Match per wedstrijd + seizoensstatistieken.
-- Filters voor Competitie / Beker / Oefen.
-- Uitwedstrijden tonen de thuisploeg eerst.
-- Trainingen en wedstrijden kunnen worden verwijderd.
-- Trainingen en wedstrijden kunnen op **Afgelast** worden gezet.
-
-## Belangrijk: Afgelast
-
-Een afgelaste activiteit blijft zichtbaar in planning en historie, maar telt nergens mee:
-- niet voor trainingsaanwezigheid of aanwezigheidspercentage;
-- niet voor gespeelde wedstrijden;
-- niet voor basis- of bankregistraties;
-- niet voor minuten, goals, assists of kaarten;
-- niet voor uitslagen/teamstatistieken;
-- niet voor Man of the Match.
-
-Je kunt Afgelast kiezen bij Bewerken of direct via de knop op de training/wedstrijd. Via **Herstellen** zet je hem weer terug op Gepland.
-
-
-## v2.1.9
-- Spelersprofiel opnieuw ingericht voor mobiel.
-- MOTM toegevoegd als vaste spelerstatistiek.
-- Goals en assists los weergegeven.
-- Mobiele profielheader en actieknoppen compacter gemaakt.
+## Belangrijk
+- Welzijn en load zijn coachondersteuning, geen medische diagnose.
+- De app berekent geen blessurekans.
+- Bewaar vóór grote wijzigingen altijd een JSON-back-up.
