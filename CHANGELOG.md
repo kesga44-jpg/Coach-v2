@@ -1,7 +1,8 @@
-# V3.0 changelog
-
-## Nieuw
-Wedstrijdmodus, eventlog, speelminuten/positiehistorie-invoer, spelerontwikkeldoelen, scorehistorie, RPE/wellness, trainingsload, tegenstanderdossier, training-wedstrijd-evaluatieketen, documentatiegestuurd dashboard, lokale coachassistent, verbeterde mobiele bediening en compacte print/PDF-weergave.
-
-## Compatibiliteit
-Behoudt `footballCoachDataV2` en normaliseert ontbrekende V3-velden bij laden. V1 wordt nog gelezen wanneer V2 niet bestaat.
+# Changelog
+## v4.0 candidate — 2026-09-30
+- zelfstandige build
+- nieuwste groene mobiele UI/UX als designrichting
+- mobiele 5-route navigatie
+- datalaag/helpers voor spelerontwikkeling, wellness/RPE, opponent, live events, media en deep links
+- desktopstructuur behouden
+- regressie tegen volledige v2.7 expliciet vereist

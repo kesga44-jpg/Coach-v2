@@ -1,41 +1,10 @@
-# Football Coach V3 — Full Speed O23
+# Football Coach v4 — Full Speed O23
+Zelfstandige build; heeft geen V3-map of oudere runtimebestanden nodig.
 
-## Wat deze versie toevoegt
-- Wedstrijddag in 5 stappen: plan, live, speelminuten, tegenstanderdossier, evaluatie.
-- Live gebeurtenissen en coachnotities.
-- Speelminuten, basis/inval, positie, goals, assists en wedstrijd-RPE.
-- Spelerontwikkeling met doelen, acties, criteria en meetmomenten door de tijd.
-- Trainingsmonitoring: aanwezigheid, sessie-RPE × minuten, pijn, spierpijn, vermoeidheid en motivatie.
-- 7-daagse geregistreerde belasting als coachsignaal (geen blessurevoorspelling).
-- Training → hoofdthema → evaluatie → volgende stap.
-- O23-methodiek rechtstreeks in dashboard, trainingen, tactiek en seizoen.
-- Tegenstanderdossier met formatie, opbouw, pressing, sterktes/zwaktes en standaardsituaties.
-- Lokale coachassistent op basis van eigen data en vaste O23-regels.
-- JSON back-up/import en behoud van `footballCoachDataV2`.
+## Richting
+De nieuwste groene mobiele UI/UX is leidend. De app behoudt de V3-code in deze build en voegt v4-datavelden/helpers toe voor spelerontwikkeling, wellness/RPE, opponentdossiers, live match events, media/context en deep links. Mobiel krijgt de nieuwe vijfdelige hoofdnav; desktop kan de bestaande sidebar blijven gebruiken.
 
-## Documentatielogica
-Deze build volgt de aangeleverde O23-documentatie:
-- dinsdag ontwikkelen;
-- donderdag aanscherpen / hogere beslisdruk;
-- zaterdag toetsen;
-- maximaal één hoofdprobleem per ontwikkelweek;
-- vaste coachtaal: centrum dicht, naar buiten, aansluiten, doorstappen, rugdekking, vijf seconden;
-- welzijn vóór de sessie en sessie-RPE × minuten erna;
-- minutenbanden groen 75–90, oranje 45–60, rood individueel/aangepast;
-- wedstrijdobservaties terugvoeren naar de volgende training.
+## Zeer belangrijk
+De oudere v2.2/v2.7 codebasis bevat aantoonbaar uitgebreidere functies (o.a. sync, bronnen, uitgebreide tactiek/opslag) dan de vereenvoudigde V3. Die bron was tijdens deze build wel geïndexeerd maar niet als volledig raw bestand beschikbaar. Daarom is deze ZIP een zelfstandige v4-kandidaat, maar niet gelabeld als 'regressievrij t.o.v. v2.7' totdat de oude volledige bestanden tegen deze build zijn getest/ingevoegd.
 
-## Updaten zonder data kwijt te raken
-1. Maak in je huidige app eerst een JSON-back-up.
-2. Vervang op GitHub de oude `index.html`, `app.js`, `style.css`, `manifest.json` en `sw.js` door deze bestanden.
-3. Laat de GitHub Pages URL/repository gelijk. De browser gebruikt dezelfde localStorage-key: `footballCoachDataV2`.
-4. Open de app en controleer spelers, aanwezigheid en wedstrijden.
-5. Importeer de JSON-back-up alleen als gegevens niet automatisch zichtbaar zijn.
-6. Op iPhone kan een oude service-worker-cache blijven hangen. Sluit de PWA volledig en open opnieuw; indien nodig verwijder de beginscherm-app en voeg dezelfde URL opnieuw toe.
-
-## PDF / iPhone / Boeken
-Gebruik in een wedstrijd `Evaluatie` → `Print / PDF / Boeken`. Op iPhone/iPad: Deel/Print, open de afdrukpreview groot en kies opnieuw Deel. Daarna kun je bewaren in Bestanden of naar Boeken sturen. De print-CSS is compact en probeert kaarten niet over pagina's te breken.
-
-## Belangrijk
-- Welzijn en load zijn coachondersteuning, geen medische diagnose.
-- De app berekent geen blessurekans.
-- Bewaar vóór grote wijzigingen altijd een JSON-back-up.
+Maak vóór gebruik een JSON-back-up. Test minimaal: spelers, aanwezigheid, trainingen, oefeningen, wedstrijden, tactiek, seizoen, stats, notities, documenten, assistent, instellingen, sync, PDF/Books en dataherstel.

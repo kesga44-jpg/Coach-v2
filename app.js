@@ -60,3 +60,25 @@ function bindPage(){
  $('#backup')?.addEventListener('click',()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=`football-coach-backup-${iso()}.json`;a.click();URL.revokeObjectURL(a.href)});$('#restore')?.addEventListener('change',async e=>{try{const j=JSON.parse(await e.target.files[0].text());state=normalize(j);save();alert('Back-up geïmporteerd.')}catch{alert('Ongeldige back-up.')}})
 }
 const oldRender=render;render=function(){oldRender();bindPage()};load();render();
+
+/* =========================================================
+   FOOTBALL COACH v4 — zelfstandige documentatie-uitbreiding
+   ========================================================= */
+(() => {
+ 'use strict';
+ if(window.__FC_V4__)return; window.__FC_V4__=true;
+ const KEY='footballCoachDataV2';
+ const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch{return{}}};
+ const save=s=>localStorage.setItem(KEY,JSON.stringify(s));
+ window.FC4={
+   ensure(){
+     const s=load(); s.playerDevelopment ||= {}; s.wellness ||= []; s.opponents ||= [];
+     s.matchEvents ||= {}; s.mediaLinks ||= []; save(s); return s;
+   },
+   sessionLoad(minutes,rpe){return Math.max(0,Number(minutes)||0)*Math.max(0,Math.min(10,Number(rpe)||0))},
+   addWellness(playerId,values={}){const s=this.ensure();s.wellness.push({id:'w-'+Date.now(),playerId,date:new Date().toISOString().slice(0,10),pain:Number(values.pain||0),soreness:Number(values.soreness||0),fatigue:Number(values.fatigue||0),motivation:Number(values.motivation||0)});save(s)},
+   addMatchEvent(matchId,type,detail={}){const s=this.ensure();s.matchEvents[matchId] ||= [];s.matchEvents[matchId].push({id:'e-'+Date.now(),type,at:new Date().toISOString(),...detail});save(s)},
+   deepLink(page,id,tab){const u=new URL(location.href);u.searchParams.set('page',page);id?u.searchParams.set('id',id):u.searchParams.delete('id');tab?u.searchParams.set('tab',tab):u.searchParams.delete('tab');history.replaceState({},'',u)}
+ };
+ FC4.ensure();
+})();
