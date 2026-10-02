@@ -1,1 +1,22 @@
-{"name":"Football Coach O23","short_name":"Coach O23","start_url":"./","display":"standalone","background_color":"#071a12","theme_color":"#0b5d3b","lang":"nl","description":"Full Speed O23 coachomgeving"}
+{
+  "name": "Football Coach O23",
+  "short_name": "Coach O23",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#071a12",
+  "theme_color": "#0b5d3b",
+  "lang": "nl",
+  "description": "Full Speed O23 coachomgeving",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

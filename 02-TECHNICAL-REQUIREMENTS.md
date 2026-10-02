@@ -1,0 +1,11 @@
+# Technical Requirements — Football Coach
+- `index.html` laadt uitsluitend `style.css`, `app.js`, `manifest.json` en registreert `sw.js`.
+- Geen externe runtime-afhankelijkheid.
+- Eén router via `data-nav`.
+- Eén state: `state`.
+- Eén opslagkey: `footballCoachApp`.
+- Eén normalisatiepad voor ontbrekende velden binnen het huidige schema; geen versieketen.
+- Offline-first PWA.
+- Input escapen bij HTML-output.
+- Back-up/export en import zijn expliciete gebruikersacties.
+- Responsive en iPhone-safe-area.

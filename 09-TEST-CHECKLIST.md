@@ -1,0 +1,14 @@
+# Test Checklist — Football Coach
+- [ ] App start zonder bestanden uit een oudere release.
+- [ ] Alle navigatieknoppen werken op iPhone en desktop.
+- [ ] Spelers toevoegen/bewerken.
+- [ ] Aanwezigheid opslaan.
+- [ ] Training maken/openen/evalueren.
+- [ ] Oefening toevoegen.
+- [ ] Wedstrijd maken; alle tabs openen; gegevens opslaan.
+- [ ] Spelmodel: identiteit, sliders, shapes, momenten en principes opslaan.
+- [ ] Tactics Studio-link faalt netjes zonder de Coach-app te blokkeren.
+- [ ] Back-up export/import.
+- [ ] Herladen behoudt data.
+- [ ] Offline shell werkt na eerste bezoek.
+- [ ] Geen console syntax-errors.
