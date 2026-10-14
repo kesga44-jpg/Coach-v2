@@ -16,3 +16,13 @@ button,.btn{min-height:44px}
  .mobile-v4-nav button.active{background:rgba(255,255,255,.14);color:#fff}
 }
 @media(min-width:761px){.mobile-v4-nav{display:none}}
+
+/* v4.1 interface */
+.mobilebar{display:none!important}
+.field input,.field select,.field textarea,.btn,.teamselect,#playerSearch,#playerStatusFilter,#exTag{min-height:44px}
+input[type=checkbox]{width:22px;height:22px}
+#playerSearch,#playerStatusFilter,#exTag{background:#081b14;color:var(--text);border:1px solid var(--line);border-radius:11px;padding:8px 10px}
+.main{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+@media(min-width:761px) and (max-width:1100px){.card,.card.wide{grid-column:span 6}.card.full{grid-column:1/-1}.nav{flex-wrap:wrap}}
+@media(max-width:760px){.nav{display:none}}
+@media print{.mobile-v4-nav{display:none!important}}
